@@ -22,6 +22,14 @@ describe("scoreCandidate", () => {
     expect(scoreCandidate("Emmy's African Cuisines", near("Emmy's African Cuisine"))).toBe(1);
   });
 
+  it("tolerates a one-letter mishearing in a longer name word", () => {
+    expect(scoreCandidate("Emmy's African Cuisines", near("Immy's African Cuisine"))).toBe(1);
+  });
+
+  it("does not treat short words one letter apart as the same", () => {
+    expect(isLowConfidence(scoreCandidate("Bar", near("Bay")))).toBe(true);
+  });
+
   it("scores anything more than 40 km from Milwaukee as 0", () => {
     expect(scoreCandidate("Café Corazón", near("Café Corazón", 120_000))).toBe(0);
   });

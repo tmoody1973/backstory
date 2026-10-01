@@ -4,7 +4,7 @@ import { BedrockRuntimeClient, ConverseCommand, type ToolInputSchema } from "@aw
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { buildTranscriptIndex } from "../lib/evidence";
-import { applyEvidence, buildExtractionPrompt, extractionJsonSchema, extractionSchema } from "../lib/extraction";
+import { applyEvidence, buildExtractionPrompt, extractionJsonSchema, extractionSchema, trimToCaps } from "../lib/extraction";
 import { getShowProfile } from "../lib/shows";
 import { runStep, stepArgs } from "../lib/steps";
 
@@ -41,7 +41,8 @@ export const run = internalAction({
       );
       const toolUse = response.output?.message?.content?.find((block) => block.toolUse)?.toolUse;
       if (!toolUse?.input) throw new Error(`Model returned no ${TOOL_NAME} call (stopReason: ${response.stopReason})`);
-      const extraction = extractionSchema.parse(toolUse.input); // throws → retry → needs_editor
+      if (response.stopReason === "max_tokens") throw new Error("Model ran out of output tokens mid-extraction");
+      const extraction = extractionSchema.parse(trimToCaps(toolUse.input)); // throws → retry → needs_editor
       const { dropped, ...result } = applyEvidence(extraction, buildTranscriptIndex(input.segments), profile);
       for (const item of dropped) console.log(`[backstory] ${args.storyId} dropped ${item.kind} "${item.name}": ${item.reason}`);
       await ctx.runMutation(internal.extractions.save, { ...args, runId: `${args.storyId}:${Date.now()}`, result });

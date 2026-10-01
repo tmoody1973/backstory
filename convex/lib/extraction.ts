@@ -4,6 +4,8 @@ import { ACTION_KINDS, ENTITY_TYPES, PLACE_CATEGORIES, type ShowProfile } from "
 import { TOPIC_VALUES } from "./taxonomy";
 
 export const MAX_TOPICS = 3;
+export const MAX_MENTIONS = 40;
+export const MAX_ACTIONS = 10;
 
 const FILLER_WORDS = new Set(["the", "a", "an", "and", "of"]);
 
@@ -27,7 +29,7 @@ export const extractionSchema = z.object({
         relatedPlace: z.string().nullable(),
       }),
     )
-    .max(40),
+    .max(MAX_MENTIONS),
   topics: z
     .array(z.object({ topic: z.enum(TOPIC_VALUES), confidence: z.number().min(0).max(1), quote: z.string() }))
     .max(MAX_TOPICS),
@@ -35,8 +37,24 @@ export const extractionSchema = z.object({
     .array(
       z.object({ kind: z.enum(ACTION_KINDS), label: z.string().min(1), placeName: z.string().nullable(), quote: z.string() }),
     )
-    .max(10),
+    .max(MAX_ACTIONS),
 });
+
+/**
+ * Keeps the first items up to each cap. A model that lists 45 mentions should lose the last 5,
+ * not the whole episode (at temperature 0 a retry would overflow the same way).
+ */
+export function trimToCaps(raw: unknown): unknown {
+  if (typeof raw !== "object" || raw === null) return raw;
+  const cap = (value: unknown, max: number) => (Array.isArray(value) ? value.slice(0, max) : value);
+  const output = raw as Record<string, unknown>;
+  return {
+    ...output,
+    mentions: cap(output.mentions, MAX_MENTIONS),
+    topics: cap(output.topics, MAX_TOPICS),
+    actions: cap(output.actions, MAX_ACTIONS),
+  };
+}
 
 export type Extraction = z.infer<typeof extractionSchema>;
 

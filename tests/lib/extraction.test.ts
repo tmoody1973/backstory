@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildTranscriptIndex } from "../../convex/lib/evidence";
 import {
-  applyEvidence, buildExtractionPrompt, extractionJsonSchema, extractionSchema, type Extraction,
+  applyEvidence, buildExtractionPrompt, extractionJsonSchema, extractionSchema, trimToCaps, type Extraction,
 } from "../../convex/lib/extraction";
 import { getShowProfile } from "../../convex/lib/shows";
 import { TEST_SEGMENTS } from "../fixtures/segments";
@@ -90,6 +90,24 @@ describe("applyEvidence with the Uniquely Milwaukee profile", () => {
     expect(checked.mentions.map((m) => m.name)).toEqual(["Café Corazón"]);
     expect(checked.dropped).toContainEqual({ kind: "mention", name: "churros", reason: "entity type dish not in show profile" });
     expect(checked.actions.map((a) => a.kind)).toEqual(["visit", "support", "attend"]);
+  });
+});
+
+describe("trimToCaps", () => {
+  it("keeps the first items up to each cap instead of failing the whole run", () => {
+    const many = (n: number, item: object) => Array.from({ length: n }, () => item);
+    const trimmed = trimToCaps({
+      ...raw,
+      mentions: many(45, raw.mentions[0]),
+      topics: many(5, raw.topics[0]),
+      actions: many(12, raw.actions[0]),
+    });
+    const parsed = extractionSchema.parse(trimmed);
+    expect([parsed.mentions.length, parsed.topics.length, parsed.actions.length]).toEqual([40, 3, 10]);
+  });
+
+  it("leaves output it cannot read for the schema to reject", () => {
+    expect(trimToCaps("not an object")).toBe("not an object");
   });
 });
 

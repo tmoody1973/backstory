@@ -33,16 +33,42 @@ function nameWords(text: string): Set<string> {
   return new Set(normalizeForMatch(text).split(" ").filter((word) => word && !STOP_WORDS.has(word)).map(stem));
 }
 
-/** Shared distinctive words over all distinct words (Jaccard); 0 if it's out of town. */
+/** True when two words differ by one inserted, deleted or changed letter ("emmys" / "immys"). */
+function oneEditApart(a: string, b: string): boolean {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i++;
+      j++;
+      continue;
+    }
+    if (++edits > 1) return false;
+    if (a.length > b.length) i++;
+    else if (b.length > a.length) j++;
+    else {
+      i++;
+      j++;
+    }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
+/** Same word, or a one-letter mishearing of a word of 4+ letters (Transcribe heard "Emmy's" for Immy's). */
+const sameWord = (a: string, b: string) => a === b || (a.length >= 4 && b.length >= 4 && oneEditApart(a, b));
+
+/** Shared distinctive words over all distinct words (Jaccard, counting near-matches as shared); 0 if it's out of town. */
 // ponytail: word overlap, not fuzzy matching; switch to trigram similarity if misspelled names show up in review
 export function scoreCandidate(placeName: string, candidate: GeoCandidate): number {
   if (candidate.distanceM !== undefined && candidate.distanceM > MAX_DISTANCE_M) return 0;
   const want = nameWords(placeName);
   if (want.size === 0) return 0;
-  const got = nameWords(candidate.title);
+  const got = [...nameWords(candidate.title)];
   let shared = 0;
-  for (const word of want) if (got.has(word)) shared++;
-  return shared / new Set([...want, ...got]).size;
+  for (const word of want) if (got.some((other) => sameWord(word, other))) shared++;
+  return shared / (want.size + got.length - shared);
 }
 
 export function pickBest(
