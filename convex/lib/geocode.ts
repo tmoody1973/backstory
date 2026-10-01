@@ -25,8 +25,12 @@ export type GeocodeDecision =
   | { lat: number; lng: number; label: string | undefined; confidence: number }
   | { confidence: number };
 
+/** "Cuisines" and "Cuisine" are the same name word. */
+// ponytail: trailing-s stem only; add a real stemmer if review shows other inflections
+const stem = (word: string) => (word.length > 3 && word.endsWith("s") ? word.slice(0, -1) : word);
+
 function nameWords(text: string): Set<string> {
-  return new Set(normalizeForMatch(text).split(" ").filter((word) => word && !STOP_WORDS.has(word)));
+  return new Set(normalizeForMatch(text).split(" ").filter((word) => word && !STOP_WORDS.has(word)).map(stem));
 }
 
 /** Shared distinctive words over all distinct words (Jaccard); 0 if it's out of town. */

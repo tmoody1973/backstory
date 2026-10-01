@@ -48,6 +48,20 @@ describe("applyEvidence", () => {
     expect(result.dropped).toContainEqual({ kind: "mention", name: "Joe's Pizza", reason: "quote does not name it" });
   });
 
+  it("drops websites and the show itself, which are never story subjects", () => {
+    const noisy: Extraction = {
+      ...raw,
+      mentions: [
+        { entityType: "place", name: "radiomilwaukee.org/ourstories", placeCategory: "organization", relatedPlace: null, quote: "Welcome back to This Bites" },
+        { entityType: "organization", name: "This Bites", placeCategory: null, relatedPlace: null, quote: "Welcome back to This Bites" },
+      ],
+    };
+    const result = applyEvidence(noisy, index, profile);
+    expect(result.mentions).toEqual([]);
+    expect(result.dropped).toContainEqual({ kind: "mention", name: "radiomilwaukee.org/ourstories", reason: "a website, not a story subject" });
+    expect(result.dropped).toContainEqual({ kind: "mention", name: "This Bites", reason: "the show itself, not a story subject" });
+  });
+
   it("drops a place with no category and a dish with no restaurant", () => {
     expect(checked.dropped).toContainEqual({ kind: "mention", name: "Bay View Market", reason: "place without a category" });
     expect(checked.dropped).toContainEqual({ kind: "mention", name: "empanadas", reason: "dish without the place that serves it" });
@@ -99,6 +113,14 @@ describe("buildExtractionPrompt", () => {
 
   it("labels each transcript line with speaker and time", () => {
     expect(prompt).toContain("[spk_1 00:04] We bid a bittersweet farewell to Café Corazón in Bay View,");
+  });
+
+  it("asks for quotes copied with the transcript's own spelling", () => {
+    expect(prompt).toContain("exactly as the TRANSCRIPT spells it, even when a name is misspelled there");
+  });
+
+  it("asks for action labels that say what to do and where", () => {
+    expect(prompt).toContain("Visit Café Corazón in Riverwest");
   });
 
   it("asks for quotes that name what they support", () => {

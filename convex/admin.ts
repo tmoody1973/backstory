@@ -1,5 +1,7 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
+import { enqueue } from "./jobs";
 import { isLowConfidence } from "./lib/geocode";
 
 // A run holds at most 40 mentions, 3 topics and 10 actions (extraction schema).
@@ -32,5 +34,22 @@ export const approveLatestRunForDemo = internalMutation({
     for (const row of actions) if (row.reviewStatus === "pending") await ctx.db.patch("storyActions", row._id, { reviewStatus: "approved" });
 
     await ctx.db.patch("stories", storyId, { summary: story.proposedSummary, approvedRunId: runId, reviewStatus: "approved" });
+  },
+});
+
+/**
+ * Re-run extraction on an existing transcript (no new Transcribe bill), e.g. after a prompt change:
+ *   npx convex run admin:reextract '{"storyId":"..."}'
+ * The new run is pending; whatever an editor already approved stays live until they approve the new one.
+ */
+export const reextract = internalMutation({
+  args: { storyId: v.id("stories") },
+  handler: async (ctx, { storyId }) => {
+    const segment = await ctx.db
+      .query("transcriptSegments")
+      .withIndex("by_storyId_and_idx", (q) => q.eq("storyId", storyId))
+      .first();
+    if (!segment) throw new Error(`Story ${storyId} has no transcript yet`);
+    await enqueue(ctx, "extract", storyId, internal.aws.extract.run);
   },
 });

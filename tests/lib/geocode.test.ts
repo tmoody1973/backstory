@@ -18,6 +18,10 @@ describe("scoreCandidate", () => {
     expect(isLowConfidence(scoreCandidate("Ardent", near("Ardent Dental")))).toBe(true);
   });
 
+  it("treats singular and plural as the same word", () => {
+    expect(scoreCandidate("Emmy's African Cuisines", near("Emmy's African Cuisine"))).toBe(1);
+  });
+
   it("scores anything more than 40 km from Milwaukee as 0", () => {
     expect(scoreCandidate("Café Corazón", near("Café Corazón", 120_000))).toBe(0);
   });

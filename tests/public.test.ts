@@ -135,3 +135,22 @@ describe("admin.approveLatestRunForDemo", () => {
     await expect(approve(t, storyId)).rejects.toThrow("Story has no extraction run to approve yet");
   });
 });
+
+describe("admin.reextract", () => {
+  it("queues a new extraction for a transcribed story", async () => {
+    const t = makeTest();
+    const storyId = await extractedStory(t);
+    await t.run((ctx) =>
+      ctx.db.insert("transcriptSegments", { storyId, idx: 0, speaker: "spk_0", startMs: 0, endMs: 4000, text: "Welcome back to This Bites." }),
+    );
+    await t.mutation(internal.admin.reextract, { storyId });
+    const jobs = await t.run((ctx) => ctx.db.query("jobs").collect());
+    expect(jobs.filter((j) => j.kind === "extract" && j.status === "queued")).toHaveLength(1);
+  });
+
+  it("refuses a story that has no transcript yet", async () => {
+    const t = makeTest();
+    const storyId = await seedStory(t, { stage: "transcribing" });
+    await expect(t.mutation(internal.admin.reextract, { storyId })).rejects.toThrow("has no transcript yet");
+  });
+});

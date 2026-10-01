@@ -7,6 +7,8 @@ export const MAX_TOPICS = 3;
 
 const FILLER_WORDS = new Set(["the", "a", "an", "and", "of"]);
 
+const looksLikeWebsite = (name: string) => /https?:|www\.|\/|\.(org|com|net|edu|gov|fm)\b/i.test(name);
+
 /** True when at least one word of the name appears in the quote, so the quote is about it. */
 function quoteNamesIt(name: string, quote: string): boolean {
   const quoteWords = new Set(normalizeForMatch(quote).split(" "));
@@ -67,13 +69,16 @@ export function buildExtractionPrompt(input: {
     "",
     "Rules:",
     `- Every quote must be copied word for word from the TRANSCRIPT: at least ${MIN_QUOTE_WORDS} consecutive words, no paraphrasing. Anything whose quote is not in the transcript is discarded automatically.`,
+    "- Copy each quote exactly as the TRANSCRIPT spells it, even when a name is misspelled there; put the correct spelling (from SHOW NOTES if needed) in name.",
     "- SHOW NOTES are for spelling names correctly only. Never quote them.",
+    `- Never record a website, a URL, or this show itself ("${input.profile.name}") as a mention.`,
     "- A mention's quote must contain its name (or part of it), so an editor can see what it refers to.",
     `- Allowed mention types: ${input.profile.entityTypes.join(", ")}.`,
     "- Places are public businesses, venues, parks and organizations only, never a private home or home address. Every place needs a placeCategory; use null for anything that is not a place.",
     "- A dish must name the place that serves it in relatedPlace; otherwise leave the dish out.",
     `- Up to ${MAX_TOPICS} topics, only from: ${TOPIC_VALUES.join(", ")}. Each needs a supporting quote.`,
     `- Actions a listener could take, only of kinds: ${input.profile.actionKinds.join(", ")}. Set placeName to the place exactly as named in mentions when the action has one.`,
+    '- Action label: a short phrase saying what to do and where, for example "Visit Café Corazón in Riverwest".',
     "- summary: two sentences describing the episode. It is labeled as a summary, so never present opinions as facts or put words in anyone's mouth.",
     `- ${input.profile.extractionNotes}`,
     "",
@@ -114,6 +119,10 @@ export function applyEvidence(extraction: Extraction, index: TranscriptIndex, pr
   };
 
   const mentions = extraction.mentions.flatMap((mention) => {
+    if (looksLikeWebsite(mention.name)) return drop("mention", mention.name, "a website, not a story subject");
+    if (normalizeForMatch(mention.name) === normalizeForMatch(profile.name)) {
+      return drop("mention", mention.name, "the show itself, not a story subject");
+    }
     if (!profile.entityTypes.includes(mention.entityType)) {
       return drop("mention", mention.name, `entity type ${mention.entityType} not in show profile`);
     }
