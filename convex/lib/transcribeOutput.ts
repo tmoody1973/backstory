@@ -23,3 +23,12 @@ export function parseTranscribeOutput(json: unknown): Segment[] {
       text: segment.transcript.trim(),
     }));
 }
+
+/**
+ * Whether the transcribe step should pay for a new Transcribe job. A retry after a hiccup
+ * (throttled status check, S3 read error, slow job) resumes the job it already started;
+ * only a job that Transcribe itself marked FAILED is started again.
+ */
+export function shouldStartNewTranscription(existingStatus: string | null): boolean {
+  return existingStatus === null || existingStatus === "FAILED";
+}

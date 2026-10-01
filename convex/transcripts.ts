@@ -24,6 +24,14 @@ export const jobExternalId = internalQuery({
   },
 });
 
+export const existingJobName = internalQuery({
+  args: { jobId: v.id("jobs") },
+  handler: async (ctx, { jobId }) => {
+    const job = await ctx.db.get("jobs", jobId);
+    return job?.externalId ?? null;
+  },
+});
+
 export const markTranscribing = internalMutation({
   args: { jobId: v.id("jobs"), storyId: v.id("stories"), externalId: v.string() },
   handler: async (ctx, { jobId, storyId, externalId }) => {

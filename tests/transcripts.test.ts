@@ -47,3 +47,13 @@ describe("transcripts", () => {
     expect(count).toBe(2);
   });
 });
+
+describe("transcripts.existingJobName", () => {
+  it("is null before a Transcribe job was started, and the job name after", async () => {
+    const t = makeTest();
+    const { storyId, jobId } = await seedTranscribeJob(t);
+    expect(await t.query(internal.transcripts.existingJobName, { jobId })).toBeNull();
+    await t.mutation(internal.transcripts.markTranscribing, { jobId, storyId, externalId: "backstory-x-1" });
+    expect(await t.query(internal.transcripts.existingJobName, { jobId })).toBe("backstory-x-1");
+  });
+});

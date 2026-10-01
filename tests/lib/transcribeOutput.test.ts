@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseTranscribeOutput } from "../../convex/lib/transcribeOutput";
+import { parseTranscribeOutput, shouldStartNewTranscription } from "../../convex/lib/transcribeOutput";
 import fixture from "../fixtures/transcribe-output.json";
 
 describe("parseTranscribeOutput", () => {
@@ -14,5 +14,19 @@ describe("parseTranscribeOutput", () => {
     expect(() => parseTranscribeOutput({ results: { transcripts: [] } })).toThrow(
       "Transcribe output has no audio_segments; was ShowSpeakerLabels on?",
     );
+  });
+});
+
+describe("shouldStartNewTranscription", () => {
+  it("starts when there is no earlier Transcribe job", () => {
+    expect(shouldStartNewTranscription(null)).toBe(true);
+  });
+
+  it("starts again only when the earlier job failed", () => {
+    expect(shouldStartNewTranscription("FAILED")).toBe(true);
+  });
+
+  it("resumes a job that is queued, running, or already finished instead of paying twice", () => {
+    expect(["QUEUED", "IN_PROGRESS", "COMPLETED"].map(shouldStartNewTranscription)).toEqual([false, false, false]);
   });
 });
