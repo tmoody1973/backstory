@@ -6,7 +6,7 @@ The station's story engine: turns podcast episodes into transcribed, evidence-ch
 
 1. A daily cron asks NPR CDS for the newest episodes of each show and saves new ones as pending stories.
 2. **Transcribe:** the MP3 is copied to S3 and run through Amazon Transcribe with speaker labels.
-3. **Extract:** one Amazon Nova Micro call proposes people, places, dishes, topics, actions and a summary. Anything whose quote isn't in the transcript is dropped.
+3. **Extract:** one Claude Haiku 4.5 call on Bedrock proposes people, places, dishes, topics, actions and a summary. Anything whose quote isn't in the transcript is dropped.
 4. **Geocode:** Amazon Location finds coordinates for each place, with a confidence score.
 5. An editor approves the run. Only then do `public.getStory` and `public.searchStories` return it.
 

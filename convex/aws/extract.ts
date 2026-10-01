@@ -8,8 +8,8 @@ import { applyEvidence, buildExtractionPrompt, extractionJsonSchema, extractionS
 import { getShowProfile } from "../lib/shows";
 import { runStep, stepArgs } from "../lib/steps";
 
-// Cross-region inference profile for Nova Micro. If Bedrock rejects it, check the console's model id for us-east-1.
-const DEFAULT_MODEL_ID = "us.amazon.nova-micro-v1:0";
+// Claude Haiku 4.5 on Bedrock (decision 006): Nova Micro paraphrased quotes and Nova Lite broke on long episodes.
+const DEFAULT_MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0";
 const TOOL_NAME = "record_extraction";
 
 export const run = internalAction({
