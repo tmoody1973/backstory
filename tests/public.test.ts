@@ -3,9 +3,18 @@ import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import { makeTest, SAMPLE_RESULT, saveRun, seedStory, type TestConvex } from "./helpers";
 
-async function extractedStory(t: TestConvex) {
+async function geocodePlaces(t: TestConvex, confidence: number) {
+  await t.run(async (ctx) => {
+    for (const place of await ctx.db.query("places").collect()) {
+      await ctx.db.patch("places", place._id, confidence >= 0.6 ? { lat: 43.0, lng: -87.9, geocodeConfidence: confidence } : { geocodeConfidence: confidence });
+    }
+  });
+}
+
+async function extractedStory(t: TestConvex, placeConfidence = 1) {
   const storyId = await seedStory(t, { stage: "geocoded" });
   await saveRun(t, storyId, "run-1");
+  await geocodePlaces(t, placeConfidence);
   return storyId;
 }
 
@@ -28,7 +37,7 @@ describe("public.getStory", () => {
       show: "This Bites",
       summary: SAMPLE_RESULT.summary,
       attribution: "This Bites, September 2026",
-      places: [{ name: "Café Corazón", category: "restaurant", lat: null, quote: "a bittersweet farewell to Café Corazón in Bay View" }],
+      places: [{ name: "Café Corazón", category: "restaurant", lat: 43.0, quote: "a bittersweet farewell to Café Corazón in Bay View" }],
       mentions: [{ entityType: "person", name: "Joe Sasto" }],
       topics: [{ topic: "food-drink" }],
       actions: [{ kind: "visit", label: "Visit Café Corazón in Riverwest", place: "Café Corazón" }],
@@ -72,6 +81,33 @@ describe("public.getStory", () => {
     expect(story?.mentions).toEqual([]);
     expect(story?.places).toEqual([]);
     expect(story?.actions).toEqual([]);
+  });
+});
+
+describe("place review gates", () => {
+  it("demo approval leaves low-confidence places, and the actions that use them, for an editor", async () => {
+    const t = makeTest();
+    const storyId = await extractedStory(t, 0.5);
+    await approve(t, storyId);
+    const story = await t.query(api.public.getStory, { storyId });
+    expect(story?.places).toEqual([]);
+    expect(story?.actions).toEqual([]);
+    const place = await t.run(async (ctx) => (await ctx.db.query("places").collect())[0]);
+    expect(place.reviewStatus).toBe("pending");
+  });
+
+  it("a rejected place no longer appears by name in actions or search", async () => {
+    const t = makeTest();
+    const storyId = await extractedStory(t);
+    await approve(t, storyId);
+    await t.run(async (ctx) => {
+      const place = (await ctx.db.query("places").collect())[0];
+      await ctx.db.patch("places", place._id, { reviewStatus: "rejected" });
+    });
+    const story = await t.query(api.public.getStory, { storyId });
+    expect(story?.places).toEqual([]);
+    expect(story?.actions).toEqual([]);
+    expect(await t.query(api.public.searchStories, { text: "Corazon" })).toEqual([]);
   });
 });
 

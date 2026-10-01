@@ -95,7 +95,9 @@ export default defineSchema({
     fieldGuideVenueId: v.optional(v.string()), // matched in Plan 2
     lastConfirmedAt: v.optional(v.number()), // restaurant freshness, Plan 5
     reviewStatus: reviewStatusValidator,
-  }).index("by_storyId_and_runId", ["storyId", "runId"]),
+  })
+    .index("by_storyId_and_runId", ["storyId", "runId"])
+    .index("by_mentionId", ["mentionId"]),
 
   storyTopics: defineTable({
     storyId: v.id("stories"),

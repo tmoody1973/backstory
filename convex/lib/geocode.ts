@@ -4,6 +4,10 @@ import { normalizeForMatch } from "./evidence";
 export const MILWAUKEE_CENTER: [number, number] = [-87.9065, 43.0389];
 export const MAX_DISTANCE_M = 40_000;
 export const LOW_CONFIDENCE = 0.6;
+/** Two strong matches farther apart than this are different locations of one name. */
+const SAME_PLACE_M = 200;
+/** Confidence given to a name with several real locations: below LOW_CONFIDENCE, so an editor picks. */
+const AMBIGUOUS_CONFIDENCE = 0.5;
 
 // Words too generic to tell two places apart.
 const STOP_WORDS = new Set(["the", "and", "of", "a", "cafe", "restaurant", "bar", "grill", "milwaukee"]);
@@ -13,22 +17,28 @@ export interface GeoCandidate {
   position: [number, number];
   distanceM?: number;
   label?: string;
+  /** Amazon Location's PlaceType; only "PointOfInterest" (businesses, venues, parks) can be pinned. */
+  placeType?: string;
 }
+
+export type GeocodeDecision =
+  | { lat: number; lng: number; label: string | undefined; confidence: number }
+  | { confidence: number };
 
 function nameWords(text: string): Set<string> {
   return new Set(normalizeForMatch(text).split(" ").filter((word) => word && !STOP_WORDS.has(word)));
 }
 
-/** Share of the place's distinctive name words found in the result title; 0 if it's out of town. */
+/** Shared distinctive words over all distinct words (Jaccard); 0 if it's out of town. */
 // ponytail: word overlap, not fuzzy matching; switch to trigram similarity if misspelled names show up in review
 export function scoreCandidate(placeName: string, candidate: GeoCandidate): number {
   if (candidate.distanceM !== undefined && candidate.distanceM > MAX_DISTANCE_M) return 0;
   const want = nameWords(placeName);
   if (want.size === 0) return 0;
   const got = nameWords(candidate.title);
-  let found = 0;
-  for (const word of want) if (got.has(word)) found++;
-  return found / want.size;
+  let shared = 0;
+  for (const word of want) if (got.has(word)) shared++;
+  return shared / new Set([...want, ...got]).size;
 }
 
 export function pickBest(
@@ -45,4 +55,32 @@ export function pickBest(
 
 export function isLowConfidence(confidence: number): boolean {
   return confidence < LOW_CONFIDENCE;
+}
+
+/** Great-circle distance in meters between two [lng, lat] points. */
+function metersBetween([lng1, lat1]: [number, number], [lng2, lat2]: [number, number]): number {
+  const rad = Math.PI / 180;
+  const a =
+    Math.sin(((lat2 - lat1) * rad) / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lng2 - lng1) * rad) / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(a));
+}
+
+/**
+ * What to store for a place. Coordinates only for one confident, in-town business match;
+ * street addresses are never pinned (a Uniquely Milwaukee story must not locate a resident's home),
+ * and a name with several locations goes to the editor instead of a guessed pin.
+ */
+export function geocodeDecision(placeName: string, candidates: GeoCandidate[]): GeocodeDecision {
+  const pois = candidates.filter((candidate) => candidate.placeType === "PointOfInterest");
+  const best = pickBest(placeName, pois);
+  if (!best || isLowConfidence(best.confidence)) return { confidence: best?.confidence ?? 0 };
+  const rivals = pois.filter(
+    (candidate) =>
+      !isLowConfidence(scoreCandidate(placeName, candidate)) &&
+      metersBetween(candidate.position, best.candidate.position) > SAME_PLACE_M,
+  );
+  if (rivals.length > 0) return { confidence: AMBIGUOUS_CONFIDENCE };
+  const [lng, lat] = best.candidate.position;
+  return { lat, lng, label: best.candidate.label, confidence: best.confidence };
 }

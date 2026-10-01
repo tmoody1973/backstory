@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { isLowConfidence, pickBest, scoreCandidate, type GeoCandidate } from "../../convex/lib/geocode";
+import { geocodeDecision, isLowConfidence, LOW_CONFIDENCE, pickBest, scoreCandidate, type GeoCandidate } from "../../convex/lib/geocode";
 
-const near = (title: string, distanceM = 3000): GeoCandidate => ({ title, position: [-87.9, 43.03], distanceM });
+const near = (title: string, distanceM = 3000, position: [number, number] = [-87.9, 43.03]): GeoCandidate => ({
+  title, position, distanceM, placeType: "PointOfInterest",
+});
 
 describe("scoreCandidate", () => {
   it("scores an exact name match nearby as 1", () => {
@@ -9,7 +11,11 @@ describe("scoreCandidate", () => {
   });
 
   it("scores a result that shares only one name word low", () => {
-    expect(scoreCandidate("Hong Anh Palace", near("Palace Theater"))).toBeCloseTo(1 / 3);
+    expect(scoreCandidate("Hong Anh Palace", near("Palace Theater"))).toBeCloseTo(1 / 4);
+  });
+
+  it("scores a result with extra distinctive words low", () => {
+    expect(isLowConfidence(scoreCandidate("Ardent", near("Ardent Dental")))).toBe(true);
   });
 
   it("scores anything more than 40 km from Milwaukee as 0", () => {
@@ -33,5 +39,45 @@ describe("isLowConfidence", () => {
   it("flags weak matches for the editor", () => {
     expect(isLowConfidence(1 / 3)).toBe(true);
     expect(isLowConfidence(1)).toBe(false);
+  });
+});
+
+describe("geocodeDecision", () => {
+  it("pins a single strong nearby match", () => {
+    expect(geocodeDecision("Café Corazón", [near("Cafe Corazon", 3000, [-87.9, 42.99])])).toEqual({
+      lng: -87.9, lat: 42.99, label: undefined, confidence: 1,
+    });
+  });
+
+  it("stores no coordinates when every match is out of town", () => {
+    expect(geocodeDecision("Café Corazón", [near("Café Corazón", 120_000)])).toEqual({ confidence: 0 });
+  });
+
+  it("stores no coordinates for a weak match", () => {
+    const decision = geocodeDecision("Hong Anh Palace", [near("Palace Theater")]);
+    expect(decision).not.toHaveProperty("lat");
+    expect(isLowConfidence(decision.confidence)).toBe(true);
+  });
+
+  it("flags a name with several locations instead of guessing one", () => {
+    const decision = geocodeDecision("Café Corazón", [
+      near("Café Corazón", 3000, [-87.9, 42.99]), // Bay View
+      near("Café Corazón", 4000, [-87.89, 43.08]), // Riverwest, ~10 km away
+    ]);
+    expect(decision).not.toHaveProperty("lat");
+    expect(decision.confidence).toBeLessThan(LOW_CONFIDENCE);
+  });
+
+  it("treats near-identical duplicate listings as one place", () => {
+    const decision = geocodeDecision("Café Corazón", [
+      near("Café Corazón", 3000, [-87.9, 42.99]),
+      near("Café Corazón", 3000, [-87.9001, 42.9901]),
+    ]);
+    expect(decision).toMatchObject({ confidence: 1, lat: 42.99 });
+  });
+
+  it("never pins a street address, only businesses and venues", () => {
+    const home: GeoCandidate = { title: "2900 N Booth St", position: [-87.9, 43.07], distanceM: 5000, placeType: "PointAddress" };
+    expect(geocodeDecision("2900 N Booth St", [home])).toEqual({ confidence: 0 });
   });
 });

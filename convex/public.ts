@@ -21,13 +21,16 @@ export const getStory = query({
     const runId = story?.approvedRunId;
     if (!story || !runId || story.reviewStatus !== "approved" || story.doNotUse || !story.summary) return null;
 
-    const mentions = approved(
-      await ctx.db.query("mentions").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN),
-    ).filter((mention) => !mention.doNotUse);
-    const liveMentions = new Map(mentions.map((mention) => [mention._id, mention]));
     const places = approved(
       await ctx.db.query("places").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN),
-    ).filter((place) => liveMentions.has(place.mentionId));
+    );
+    const approvedPlaceMentions = new Set(places.map((place) => place.mentionId));
+    // A place mention is only live while its place row is approved, so a rejected place's name never leaks.
+    const mentions = approved(
+      await ctx.db.query("mentions").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN),
+    ).filter((mention) => !mention.doNotUse && (mention.entityType !== "place" || approvedPlaceMentions.has(mention._id)));
+    const liveMentions = new Map(mentions.map((mention) => [mention._id, mention]));
+    const livePlaces = places.filter((place) => liveMentions.has(place.mentionId));
     const topics = approved(
       await ctx.db.query("storyTopics").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN),
     );
@@ -50,7 +53,7 @@ export const getStory = query({
         .map(({ entityType, name, quote, startMs, relatedPlace }) => ({
           entityType, name, quote, startMs, relatedPlace: relatedPlace ?? null,
         })),
-      places: places.map((place) => ({
+      places: livePlaces.map((place) => ({
         name: place.name,
         category: place.category,
         lat: place.lat ?? null,
@@ -83,6 +86,10 @@ export const searchStories = query({
       if (mention.doNotUse || results.has(mention.storyId)) continue;
       const story = await ctx.db.get("stories", mention.storyId);
       if (!story || story.reviewStatus !== "approved" || story.doNotUse || story.approvedRunId !== mention.runId) continue;
+      if (mention.entityType === "place") {
+        const place = await ctx.db.query("places").withIndex("by_mentionId", (q) => q.eq("mentionId", mention._id)).unique();
+        if (place?.reviewStatus !== "approved") continue;
+      }
       results.set(mention.storyId, {
         storyId: mention.storyId,
         title: story.title,

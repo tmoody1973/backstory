@@ -3,7 +3,7 @@
 import { GeoPlacesClient, SearchTextCommand } from "@aws-sdk/client-geo-places";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { MILWAUKEE_CENTER, pickBest, type GeoCandidate } from "../lib/geocode";
+import { geocodeDecision, MILWAUKEE_CENTER, type GeoCandidate } from "../lib/geocode";
 import { runStep, stepArgs } from "../lib/steps";
 
 export const run = internalAction({
@@ -24,22 +24,16 @@ export const run = internalAction({
         );
         const candidates: GeoCandidate[] = (response.ResultItems ?? []).flatMap((item) =>
           item.Title && item.Position
-            ? [{ title: item.Title, position: [item.Position[0], item.Position[1]] as [number, number], distanceM: item.Distance, label: item.Address?.Label }]
+            ? [{
+                title: item.Title,
+                position: [item.Position[0], item.Position[1]] as [number, number],
+                distanceM: item.Distance,
+                label: item.Address?.Label,
+                placeType: item.PlaceType,
+              }]
             : [],
         );
-        const best = pickBest(place.name, candidates);
-        await ctx.runMutation(
-          internal.geocoding.savePlaceGeocode,
-          best
-            ? {
-                placeId: place.placeId,
-                lng: best.candidate.position[0],
-                lat: best.candidate.position[1],
-                label: best.candidate.label,
-                confidence: best.confidence,
-              }
-            : { placeId: place.placeId, confidence: 0 },
-        );
+        await ctx.runMutation(internal.geocoding.savePlaceGeocode, { placeId: place.placeId, ...geocodeDecision(place.name, candidates) });
       }
       await ctx.runMutation(internal.geocoding.finish, args);
     });
