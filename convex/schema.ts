@@ -16,6 +16,7 @@ export const actionKindValidator = v.union(
 export const topicValidator = v.union(
   v.literal("music"), v.literal("comedy"), v.literal("sports"), v.literal("festival"), v.literal("family"),
   v.literal("food-drink"), v.literal("arts"), v.literal("community"), v.literal("other"),
+  v.literal("civic-life"), v.literal("history"), v.literal("education"), v.literal("business"),
 );
 export const stageValidator = v.union(
   v.literal("ingested"), v.literal("transcribing"), v.literal("transcribed"),
@@ -90,6 +91,7 @@ export default defineSchema({
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
     geocodeLabel: v.optional(v.string()),
+    officialName: v.optional(v.string()), // the business's own spelling from the map match ("Immy's", not Transcribe's "Emmy's")
     geocodeConfidence: v.optional(v.number()), // 0–1; unset until the geocode step runs
     neighborhood: v.optional(v.string()), // set by editors in Plan 2
     fieldGuideVenueId: v.optional(v.string()), // matched in Plan 2

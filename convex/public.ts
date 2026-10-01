@@ -31,6 +31,7 @@ export const getStory = query({
     ).filter((mention) => !mention.doNotUse && (mention.entityType !== "place" || approvedPlaceMentions.has(mention._id)));
     const liveMentions = new Map(mentions.map((mention) => [mention._id, mention]));
     const livePlaces = places.filter((place) => liveMentions.has(place.mentionId));
+    const placeNames = new Map(livePlaces.map((place) => [place.mentionId, place.officialName ?? place.name]));
     const topics = approved(
       await ctx.db.query("storyTopics").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN),
     );
@@ -54,7 +55,7 @@ export const getStory = query({
           entityType, name, quote, startMs, relatedPlace: relatedPlace ?? null,
         })),
       places: livePlaces.map((place) => ({
-        name: place.name,
+        name: place.officialName ?? place.name,
         category: place.category,
         lat: place.lat ?? null,
         lng: place.lng ?? null,
@@ -66,7 +67,9 @@ export const getStory = query({
         kind: action.kind,
         label: action.label,
         quote: action.quote,
-        place: action.placeMentionId ? liveMentions.get(action.placeMentionId)!.name : null,
+        place: action.placeMentionId
+          ? (placeNames.get(action.placeMentionId) ?? liveMentions.get(action.placeMentionId)!.name)
+          : null,
       })),
     };
   },
@@ -86,15 +89,17 @@ export const searchStories = query({
       if (mention.doNotUse || results.has(mention.storyId)) continue;
       const story = await ctx.db.get("stories", mention.storyId);
       if (!story || story.reviewStatus !== "approved" || story.doNotUse || story.approvedRunId !== mention.runId) continue;
+      let matched = mention.name;
       if (mention.entityType === "place") {
         const place = await ctx.db.query("places").withIndex("by_mentionId", (q) => q.eq("mentionId", mention._id)).unique();
         if (place?.reviewStatus !== "approved") continue;
+        matched = place.officialName ?? mention.name;
       }
       results.set(mention.storyId, {
         storyId: mention.storyId,
         title: story.title,
         attribution: attribution(getShowProfile(story.showSlug).name, story.publishedAt),
-        matched: mention.name,
+        matched,
       });
     }
     return [...results.values()].slice(0, 10);

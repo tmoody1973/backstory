@@ -31,9 +31,10 @@ describe("show profiles", () => {
 });
 
 describe("topic vocabulary", () => {
-  it("matches the Field Guide event categories exactly", () => {
+  it("is the Field Guide's event categories plus the station's story topics", () => {
     expect(TOPIC_VALUES).toEqual([
       "music", "comedy", "sports", "festival", "family", "food-drink", "arts", "community", "other",
+      "civic-life", "history", "education", "business",
     ]);
   });
 });

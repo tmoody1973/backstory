@@ -22,7 +22,7 @@ export interface GeoCandidate {
 }
 
 export type GeocodeDecision =
-  | { lat: number; lng: number; label: string | undefined; confidence: number }
+  | { lat: number; lng: number; label: string | undefined; officialName: string; confidence: number }
   | { confidence: number };
 
 /** "Cuisines" and "Cuisine" are the same name word. */
@@ -112,5 +112,5 @@ export function geocodeDecision(placeName: string, candidates: GeoCandidate[]): 
   );
   if (rivals.length > 0) return { confidence: AMBIGUOUS_CONFIDENCE };
   const [lng, lat] = best.candidate.position;
-  return { lat, lng, label: best.candidate.label, confidence: best.confidence };
+  return { lat, lng, label: best.candidate.label, officialName: best.candidate.title, confidence: best.confidence };
 }

@@ -113,7 +113,7 @@ describe("trimToCaps", () => {
 
 describe("extractionSchema", () => {
   it("rejects a topic outside the Field Guide vocabulary", () => {
-    const bad = { ...raw, topics: [{ topic: "civic-life", confidence: 0.8, quote: "x" }] };
+    const bad = { ...raw, topics: [{ topic: "celebrity-gossip", confidence: 0.8, quote: "x" }] };
     expect(extractionSchema.safeParse(bad).success).toBe(false);
   });
 

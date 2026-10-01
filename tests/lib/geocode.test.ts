@@ -57,7 +57,13 @@ describe("isLowConfidence", () => {
 describe("geocodeDecision", () => {
   it("pins a single strong nearby match", () => {
     expect(geocodeDecision("Café Corazón", [near("Cafe Corazon", 3000, [-87.9, 42.99])])).toEqual({
-      lng: -87.9, lat: 42.99, label: undefined, confidence: 1,
+      lng: -87.9, lat: 42.99, label: undefined, officialName: "Cafe Corazon", confidence: 1,
+    });
+  });
+
+  it("takes the business's own spelling when Transcribe misheard the name", () => {
+    expect(geocodeDecision("Emmy's African Cuisines", [near("Immy's African Cuisine")])).toMatchObject({
+      officialName: "Immy's African Cuisine",
     });
   });
 

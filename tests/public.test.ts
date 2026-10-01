@@ -84,6 +84,22 @@ describe("public.getStory", () => {
   });
 });
 
+describe("official place names", () => {
+  it("getStory and searchStories use the business's own spelling", async () => {
+    const t = makeTest();
+    const storyId = await extractedStory(t);
+    const place = await t.run(async (ctx) => (await ctx.db.query("places").collect())[0]);
+    await t.mutation(internal.geocoding.savePlaceGeocode, {
+      placeId: place._id, lat: 43.0, lng: -87.9, officialName: "Cafe Corazon Riverwest", confidence: 1,
+    });
+    await approve(t, storyId);
+    const story = await t.query(api.public.getStory, { storyId });
+    expect(story?.places[0].name).toBe("Cafe Corazon Riverwest");
+    expect(story?.actions[0].place).toBe("Cafe Corazon Riverwest");
+    expect(await t.query(api.public.searchStories, { text: "Riverwest" })).toMatchObject([{ matched: "Cafe Corazon Riverwest" }]);
+  });
+});
+
 describe("place review gates", () => {
   it("demo approval leaves low-confidence places, and the actions that use them, for an editor", async () => {
     const t = makeTest();

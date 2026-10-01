@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { markDone } from "./jobs";
+import { normalizeForMatch } from "./lib/evidence";
 
 // A run holds at most 40 mentions (extraction schema), so 200 is a safe ceiling.
 const MAX_PLACES_PER_RUN = 200;
@@ -27,10 +28,18 @@ export const savePlaceGeocode = internalMutation({
     lat: v.optional(v.number()),
     lng: v.optional(v.number()),
     label: v.optional(v.string()),
+    officialName: v.optional(v.string()),
     confidence: v.number(),
   },
-  handler: async (ctx, { placeId, lat, lng, label, confidence }) => {
-    await ctx.db.patch("places", placeId, { lat, lng, geocodeLabel: label, geocodeConfidence: confidence });
+  handler: async (ctx, { placeId, lat, lng, label, officialName, confidence }) => {
+    await ctx.db.patch("places", placeId, { lat, lng, geocodeLabel: label, officialName, geocodeConfidence: confidence });
+    if (!officialName) return;
+    // Listeners search by the real name even when Transcribe misheard it.
+    const place = await ctx.db.get("places", placeId);
+    const mention = place && (await ctx.db.get("mentions", place.mentionId));
+    if (mention) {
+      await ctx.db.patch("mentions", mention._id, { searchText: `${mention.searchText} ${normalizeForMatch(officialName)}` });
+    }
   },
 });
 

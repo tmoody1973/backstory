@@ -48,6 +48,18 @@ describe("geocoding", () => {
     expect(await t.run((ctx) => ctx.db.get("places", placeId))).toMatchObject({ lat: 43.0, lng: -87.9, geocodeConfidence: 1 });
   });
 
+  it("stores the business's official name and makes the mention searchable by it", async () => {
+    const t = makeTest();
+    const { placeId } = await seedPlace(t);
+    await t.mutation(internal.geocoding.savePlaceGeocode, {
+      placeId, lat: 43.0, lng: -87.9, officialName: "Immy's African Cuisine", confidence: 1,
+    });
+    const place = await t.run((ctx) => ctx.db.get("places", placeId));
+    expect(place?.officialName).toBe("Immy's African Cuisine");
+    const mention = await t.run((ctx) => ctx.db.get("mentions", place!.mentionId));
+    expect(mention?.searchText).toContain("immys african cuisine");
+  });
+
   it("finishes the step: story geocoded, job done", async () => {
     const t = makeTest();
     const { storyId, jobId } = await seedPlace(t);
