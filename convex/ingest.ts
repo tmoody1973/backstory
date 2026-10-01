@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
-import { buildShowQueryUrl, fetchCds, parseEpisode, type CdsDocument } from "./lib/cds";
+import { buildDocumentUrl, buildShowQueryUrl, fetchCds, parseEpisode, type CdsDocument } from "./lib/cds";
 import { getShowProfile } from "./lib/shows";
 
 export const ingestShow = internalAction({
@@ -21,6 +21,31 @@ export const ingestShow = internalAction({
       if (result.created) created++;
     }
     console.log(`[backstory] ingest ${showSlug}: ${body.resources?.length ?? 0} documents, ${created} new`);
+    return { created };
+  },
+});
+
+/**
+ * Ingest specific episodes by CDS id (e.g. the labeled evaluation set), whatever their age:
+ *   npx convex run ingest:ingestEpisodes '{"showSlug":"this-bites","cdsIds":["fis-..."]}'
+ */
+export const ingestEpisodes = internalAction({
+  args: { showSlug: v.string(), cdsIds: v.array(v.string()) },
+  handler: async (ctx, { showSlug, cdsIds }) => {
+    getShowProfile(showSlug); // fail fast on an unknown show
+    const token = process.env.NPR_CDS_TOKEN;
+    if (!token) throw new Error("Missing Convex env var NPR_CDS_TOKEN");
+    let created = 0;
+    for (const cdsId of cdsIds) {
+      const body = (await fetchCds(buildDocumentUrl(cdsId), token)) as { resources?: CdsDocument[] };
+      const episode = body.resources?.[0] && parseEpisode(body.resources[0]);
+      if (!episode) {
+        console.log(`[backstory] ingest ${cdsId}: no audio, skipped`);
+        continue;
+      }
+      const result = await ctx.runMutation(internal.stories.upsertEpisode, { showSlug, ...episode });
+      if (result.created) created++;
+    }
     return { created };
   },
 });

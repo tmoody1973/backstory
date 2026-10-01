@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildShowQueryUrl, fetchCds, parseEpisode, stripHtml, type CdsDocument } from "../../convex/lib/cds";
+import { buildDocumentUrl, buildShowQueryUrl, fetchCds, parseEpisode, stripHtml, type CdsDocument } from "../../convex/lib/cds";
 import fixture from "../fixtures/cds-this-bites-episode.json";
 
 const doc = fixture as CdsDocument;
@@ -11,6 +11,12 @@ describe("buildShowQueryUrl", () => {
     expect(Object.fromEntries(url.searchParams)).toEqual({
       collectionIds: "718413877", profileIds: "podcast-episode", sort: "publishDateTime:desc", limit: "10",
     });
+  });
+});
+
+describe("buildDocumentUrl", () => {
+  it("addresses one CDS document by id", () => {
+    expect(buildDocumentUrl("fis-718413877-abc")).toBe("https://content.api.npr.org/v1/documents/fis-718413877-abc");
   });
 });
 

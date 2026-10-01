@@ -42,6 +42,10 @@ export function buildShowQueryUrl(collectionId: string, limit: number): string {
   return `${CDS_BASE_URL}/documents?${params}`;
 }
 
+export function buildDocumentUrl(cdsId: string): string {
+  return `${CDS_BASE_URL}/documents/${encodeURIComponent(cdsId)}`;
+}
+
 export function stripHtml(html: string): string {
   return html
     .replace(/<[^>]+>/g, " ")
