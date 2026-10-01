@@ -5,6 +5,14 @@ import { TOPIC_VALUES } from "./taxonomy";
 
 export const MAX_TOPICS = 3;
 
+const FILLER_WORDS = new Set(["the", "a", "an", "and", "of"]);
+
+/** True when at least one word of the name appears in the quote, so the quote is about it. */
+function quoteNamesIt(name: string, quote: string): boolean {
+  const quoteWords = new Set(normalizeForMatch(quote).split(" "));
+  return normalizeForMatch(name).split(" ").some((word) => word && !FILLER_WORDS.has(word) && quoteWords.has(word));
+}
+
 export const extractionSchema = z.object({
   summary: z.string().min(1).max(600),
   mentions: z
@@ -60,6 +68,7 @@ export function buildExtractionPrompt(input: {
     "Rules:",
     `- Every quote must be copied word for word from the TRANSCRIPT: at least ${MIN_QUOTE_WORDS} consecutive words, no paraphrasing. Anything whose quote is not in the transcript is discarded automatically.`,
     "- SHOW NOTES are for spelling names correctly only. Never quote them.",
+    "- A mention's quote must contain its name (or part of it), so an editor can see what it refers to.",
     `- Allowed mention types: ${input.profile.entityTypes.join(", ")}.`,
     "- Places are public businesses, venues, parks and organizations only, never a private home or home address. Every place needs a placeCategory; use null for anything that is not a place.",
     "- A dish must name the place that serves it in relatedPlace; otherwise leave the dish out.",
@@ -112,6 +121,7 @@ export function applyEvidence(extraction: Extraction, index: TranscriptIndex, pr
     if (mention.entityType === "dish" && !mention.relatedPlace) {
       return drop("mention", mention.name, "dish without the place that serves it");
     }
+    if (!quoteNamesIt(mention.name, mention.quote)) return drop("mention", mention.name, "quote does not name it");
     return withEvidence("mention", mention.name, mention);
   });
 

@@ -38,6 +38,16 @@ describe("applyEvidence", () => {
     expect(checked.dropped).toContainEqual({ kind: "mention", name: "Gordon Ramsay", reason: "quote not found in transcript" });
   });
 
+  it("drops a mention whose real quote does not name it", () => {
+    const invented: Extraction = {
+      ...raw,
+      mentions: [{ entityType: "place", name: "Joe's Pizza", placeCategory: "restaurant", relatedPlace: null, quote: "Welcome back to This Bites" }],
+    };
+    const result = applyEvidence(invented, index, profile);
+    expect(result.mentions).toEqual([]);
+    expect(result.dropped).toContainEqual({ kind: "mention", name: "Joe's Pizza", reason: "quote does not name it" });
+  });
+
   it("drops a place with no category and a dish with no restaurant", () => {
     expect(checked.dropped).toContainEqual({ kind: "mention", name: "Bay View Market", reason: "place without a category" });
     expect(checked.dropped).toContainEqual({ kind: "mention", name: "empanadas", reason: "dish without the place that serves it" });
@@ -89,6 +99,10 @@ describe("buildExtractionPrompt", () => {
 
   it("labels each transcript line with speaker and time", () => {
     expect(prompt).toContain("[spk_1 00:04] We bid a bittersweet farewell to Café Corazón in Bay View,");
+  });
+
+  it("asks for quotes that name what they support", () => {
+    expect(prompt).toContain("A mention's quote must contain its name");
   });
 
   it("forbids quoting the show notes", () => {
