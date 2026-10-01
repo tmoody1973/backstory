@@ -10,6 +10,7 @@
 
 import type * as aws_extract from "../aws/extract.js";
 import type * as aws_geocode from "../aws/geocode.js";
+import type * as aws_transcribe from "../aws/transcribe.js";
 import type * as extractions from "../extractions.js";
 import type * as geocoding from "../geocoding.js";
 import type * as jobs from "../jobs.js";
@@ -19,6 +20,8 @@ import type * as lib_geocode from "../lib/geocode.js";
 import type * as lib_shows from "../lib/shows.js";
 import type * as lib_steps from "../lib/steps.js";
 import type * as lib_taxonomy from "../lib/taxonomy.js";
+import type * as lib_transcribeOutput from "../lib/transcribeOutput.js";
+import type * as transcripts from "../transcripts.js";
 
 import type {
   ApiFromModules,
@@ -29,6 +32,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   "aws/extract": typeof aws_extract;
   "aws/geocode": typeof aws_geocode;
+  "aws/transcribe": typeof aws_transcribe;
   extractions: typeof extractions;
   geocoding: typeof geocoding;
   jobs: typeof jobs;
@@ -38,6 +42,8 @@ declare const fullApi: ApiFromModules<{
   "lib/shows": typeof lib_shows;
   "lib/steps": typeof lib_steps;
   "lib/taxonomy": typeof lib_taxonomy;
+  "lib/transcribeOutput": typeof lib_transcribeOutput;
+  transcripts: typeof transcripts;
 }>;
 
 /**
