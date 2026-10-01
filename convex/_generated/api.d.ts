@@ -8,8 +8,11 @@
  * @module
  */
 
+import type * as aws_geocode from "../aws/geocode.js";
+import type * as geocoding from "../geocoding.js";
 import type * as jobs from "../jobs.js";
 import type * as lib_evidence from "../lib/evidence.js";
+import type * as lib_geocode from "../lib/geocode.js";
 import type * as lib_shows from "../lib/shows.js";
 import type * as lib_steps from "../lib/steps.js";
 import type * as lib_taxonomy from "../lib/taxonomy.js";
@@ -21,8 +24,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "aws/geocode": typeof aws_geocode;
+  geocoding: typeof geocoding;
   jobs: typeof jobs;
   "lib/evidence": typeof lib_evidence;
+  "lib/geocode": typeof lib_geocode;
   "lib/shows": typeof lib_shows;
   "lib/steps": typeof lib_steps;
   "lib/taxonomy": typeof lib_taxonomy;

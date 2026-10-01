@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "convex dev",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p convex"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1145.0",
