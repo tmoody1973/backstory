@@ -8,4 +8,8 @@ const crons = cronJobs();
 crons.cron("ingest This Bites", "0 12 * * *", internal.ingest.ingestShow, { showSlug: "this-bites", limit: 10 });
 crons.cron("ingest Uniquely Milwaukee", "15 12 * * *", internal.ingest.ingestShow, { showSlug: "uniquely-milwaukee", limit: 10 });
 
+// An action that dies outside its error handler (timeout, deploy mid-run) never reports failure;
+// the sweeper sends such jobs through the normal retry → needs_editor path.
+crons.interval("sweep stale jobs", { minutes: 15 }, internal.jobs.sweepStale, {});
+
 export default crons;

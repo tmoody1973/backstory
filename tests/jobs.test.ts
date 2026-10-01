@@ -45,3 +45,52 @@ describe("jobs.markRunning", () => {
     expect((await t.run((ctx) => ctx.db.get("jobs", jobId)))?.status).toBe("running");
   });
 });
+
+describe("finished jobs stay finished", () => {
+  it("ignores a late failure on a job that is already done", async () => {
+    const t = makeTest();
+    const { jobId } = await seedJob(t);
+    await t.run((ctx) => ctx.db.patch("jobs", jobId, { status: "done" }));
+    expect(await t.mutation(internal.jobs.fail, { jobId, error: "late throw" })).toEqual({ retry: false, delayMs: 0 });
+    expect(await t.run((ctx) => ctx.db.get("jobs", jobId))).toMatchObject({ status: "done", attempts: 0 });
+  });
+
+  it("does not mark a done job running again", async () => {
+    const t = makeTest();
+    const { jobId } = await seedJob(t);
+    await t.run((ctx) => ctx.db.patch("jobs", jobId, { status: "done" }));
+    await t.mutation(internal.jobs.markRunning, { jobId });
+    expect((await t.run((ctx) => ctx.db.get("jobs", jobId)))?.status).toBe("done");
+  });
+});
+
+describe("jobs.sweepStale", () => {
+  const THIRTY_ONE_MINUTES = 31 * 60_000;
+
+  it("retries a job with no progress for 30 minutes", async () => {
+    const t = makeTest();
+    const { jobId } = await seedJob(t);
+    await t.run((ctx) => ctx.db.patch("jobs", jobId, { updatedAt: Date.now() - THIRTY_ONE_MINUTES }));
+    await t.mutation(internal.jobs.sweepStale, {});
+    expect(await t.run((ctx) => ctx.db.get("jobs", jobId))).toMatchObject({ status: "retrying", attempts: 1 });
+    const scheduled = await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect());
+    expect(scheduled.map((s) => s.name)).toContain("aws/extract:run");
+  });
+
+  it("leaves a job that made progress recently alone", async () => {
+    const t = makeTest();
+    const { jobId } = await seedJob(t);
+    await t.run((ctx) => ctx.db.patch("jobs", jobId, { updatedAt: Date.now() - 60_000 }));
+    await t.mutation(internal.jobs.sweepStale, {});
+    expect(await t.run((ctx) => ctx.db.get("jobs", jobId))).toMatchObject({ status: "running", attempts: 0 });
+  });
+
+  it("hands a stuck job's story to an editor on its last attempt", async () => {
+    const t = makeTest();
+    const { jobId, storyId } = await seedJob(t, 2);
+    await t.run((ctx) => ctx.db.patch("jobs", jobId, { updatedAt: Date.now() - THIRTY_ONE_MINUTES }));
+    await t.mutation(internal.jobs.sweepStale, {});
+    expect((await t.run((ctx) => ctx.db.get("jobs", jobId)))?.status).toBe("needs_editor");
+    expect((await t.run((ctx) => ctx.db.get("stories", storyId)))?.stage).toBe("needs_editor");
+  });
+});

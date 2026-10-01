@@ -127,5 +127,7 @@ export default defineSchema({
     lastError: v.optional(v.string()),
     externalId: v.optional(v.string()), // Transcribe job name
     updatedAt: v.number(),
-  }).index("by_storyId", ["storyId"]),
+  })
+    .index("by_storyId", ["storyId"])
+    .index("by_status_and_updatedAt", ["status", "updatedAt"]),
 });
