@@ -2,15 +2,24 @@
 
 **What this is for:** 20 episodes, labeled by people who know the shows, become the answer key we score models against. That's how we decide between Claude Haiku and Jev for topics, and whether to try Sonnet. The PRD targets: topic agreement of 85% or better, and places at least 95% correct.
 
-**One rule above all: label from the episode, never from what the software produced.** Don't open Backstory's output for these episodes until your labels are in. Seeing it first would bias the answer key toward the model.
+**One rule above all: the answer key is what the episode actually says.** Never open Backstory's own output for these episodes. The suggestions below are deliberately mixed and unlabeled so no model gets favored.
 
-## How to label an episode
+## Two ways episodes get labeled
 
-1. Find the episode in the **Episodes** tab, put your name in *labeler*, and listen (or read its transcript, once linked).
-2. Add one row per label to the **Labels** tab, using the episode's `E` number.
-3. Mark the episode *done* in the Episodes tab.
+The **Episodes** sheet's *method* column tells you which one each episode uses. Every episode has a *transcript* link: show notes (correct spellings) on top, the full transcript (names may be misheard) below.
 
-Budget about the episode's length plus 10 minutes.
+**Suggestions (15 episodes).** Faster: you check a list instead of writing one.
+
+1. Open the **Suggestions** sheet and filter to the episode.
+2. For each row, write in *keep*:
+   - `yes`: it belongs in the answer key as written.
+   - `no`: wrong, minor, or not allowed (for example a student, a facility resident, or a private address).
+   - `fix`: right idea, wrong details. Put the correction in the next column, such as the real spelling.
+3. **Then the "what's missing" pass:** read the show notes and skim the transcript, and add anything the list didn't include to the **Labels** sheet. Don't skip this; it's how we measure what the software misses.
+
+**Blind (E13, E14, E15, E17, E20).** These five are the control, so don't look at Suggestions for them at all. Listen or read, and write every label yourself in the **Labels** sheet.
+
+When an episode is finished, put your name in *labeler* and mark *done* in the Episodes sheet. Timestamps are optional everywhere.
 
 ## What to label
 
