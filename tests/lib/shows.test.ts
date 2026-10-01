@@ -19,6 +19,12 @@ describe("show profiles", () => {
     expect(profile.actionKinds).toEqual(["visit", "attend", "support", "remember"]);
   });
 
+  it("tells extraction to skip program participants and minors in Uniquely Milwaukee stories", () => {
+    expect(getShowProfile("uniquely-milwaukee").extractionNotes).toContain(
+      "Never extract a participant in a program, a resident of a facility, a patient, or a minor",
+    );
+  });
+
   it("throws a clear error for an unknown show", () => {
     expect(() => getShowProfile("nope")).toThrow('Unknown show "nope"');
   });
