@@ -20,4 +20,19 @@ Dated entries: what we expected, what happened, what we now believe.
 - No place was ever pinned wrongly; Café Corazón was correctly held back because it has three locations.
 - Run 2 extracted a Community Reintegration Center resident by first name.
 
+**Model comparison, same two transcripts (counts from the Convex tables; tokens from the extraction log):**
+
+| Model | Show | Mentions kept | Places pinned / total | Actions | Result |
+|---|---|---|---|---|---|
+| Nova Micro (run 2) | Uniquely Milwaukee | 3 | 1 / 1 | 1 | ok, but missed My Way Out |
+| Nova Micro (run 2) | This Bites | 6 | 0 / 1 | 0 | every action quote paraphrased |
+| Nova Lite | This Bites | — | — | — | failed 3x: broken tool output, then 41+ mentions over the cap |
+| Claude Haiku 4.5 | Uniquely Milwaukee | 6 | 1 / 1 | 1 (support My Way Out) | My Way Out, Ruben Gaona, staff and the superintendent kept; the CRC resident skipped |
+| Claude Haiku 4.5 | This Bites | 39 | 5 / 17 | 3, all tied to places | Immy's pinned despite "Emmy's" in the transcript |
+| Claude Sonnet 5.5 | both | — | — | — | not run: needs a one-time Marketplace subscription and rejects forced tool choice |
+
+- Haiku gave identical counts and token usage on two separate runs.
+- Haiku measured cost: Uniquely Milwaukee 3,363 in / 817 out tokens ≈ $0.008; This Bites 7,283 in / 3,781 out ≈ $0.029 (at $1.10 / $5.50 per million).
+- Most of This Bites' unpinned places are Transcribe misspellings ("Loop and Iris", "Cochina Fipina", "Nompong") or places too new for Amazon's map data.
+
 **What we now believe:**
