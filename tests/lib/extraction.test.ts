@@ -112,6 +112,10 @@ describe("trimToCaps", () => {
 });
 
 describe("extractionSchema", () => {
+  it("accepts a long two-sentence summary instead of failing the episode", () => {
+    expect(extractionSchema.safeParse({ ...raw, summary: "x".repeat(900) }).success).toBe(true);
+  });
+
   it("rejects a topic outside the Field Guide vocabulary", () => {
     const bad = { ...raw, topics: [{ topic: "celebrity-gossip", confidence: 0.8, quote: "x" }] };
     expect(extractionSchema.safeParse(bad).success).toBe(false);

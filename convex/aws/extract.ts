@@ -36,7 +36,8 @@ export const run = internalAction({
             // If this model rejects a named tool choice, use { any: {} }: there is only one tool.
             toolChoice: { tool: { name: TOOL_NAME } },
           },
-          inferenceConfig: { maxTokens: 4096, temperature: 0 },
+          // A 22-minute food episode needed more than 4,096 output tokens; Haiku 4.5 allows far more.
+          inferenceConfig: { maxTokens: 12_000, temperature: 0 },
         }),
       );
       const modelId = process.env.BEDROCK_MODEL_ID || DEFAULT_MODEL_ID;

@@ -18,7 +18,8 @@ function quoteNamesIt(name: string, quote: string): boolean {
 }
 
 export const extractionSchema = z.object({
-  summary: z.string().min(1).max(600),
+  // Long enough for Haiku's real two-sentence summaries of busy episodes (it wrote 600+ characters live).
+  summary: z.string().min(1).max(1500),
   mentions: z
     .array(
       z.object({
