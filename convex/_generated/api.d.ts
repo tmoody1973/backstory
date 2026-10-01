@@ -8,7 +8,10 @@
  * @module
  */
 
+import type * as jobs from "../jobs.js";
+import type * as lib_evidence from "../lib/evidence.js";
 import type * as lib_shows from "../lib/shows.js";
+import type * as lib_steps from "../lib/steps.js";
 import type * as lib_taxonomy from "../lib/taxonomy.js";
 
 import type {
@@ -18,7 +21,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  jobs: typeof jobs;
+  "lib/evidence": typeof lib_evidence;
   "lib/shows": typeof lib_shows;
+  "lib/steps": typeof lib_steps;
   "lib/taxonomy": typeof lib_taxonomy;
 }>;
 
