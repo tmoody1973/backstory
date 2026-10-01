@@ -12,6 +12,7 @@ import type * as admin from "../admin.js";
 import type * as aws_extract from "../aws/extract.js";
 import type * as aws_geocode from "../aws/geocode.js";
 import type * as aws_transcribe from "../aws/transcribe.js";
+import type * as crons from "../crons.js";
 import type * as extractions from "../extractions.js";
 import type * as geocoding from "../geocoding.js";
 import type * as ingest from "../ingest.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   "aws/extract": typeof aws_extract;
   "aws/geocode": typeof aws_geocode;
   "aws/transcribe": typeof aws_transcribe;
+  crons: typeof crons;
   extractions: typeof extractions;
   geocoding: typeof geocoding;
   ingest: typeof ingest;
