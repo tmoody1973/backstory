@@ -39,6 +39,10 @@ export const run = internalAction({
           inferenceConfig: { maxTokens: 4096, temperature: 0 },
         }),
       );
+      const modelId = process.env.BEDROCK_MODEL_ID || DEFAULT_MODEL_ID;
+      console.log(
+        `[backstory] ${args.storyId} model ${modelId} tokens in ${response.usage?.inputTokens} out ${response.usage?.outputTokens}`,
+      );
       const toolUse = response.output?.message?.content?.find((block) => block.toolUse)?.toolUse;
       if (!toolUse?.input) throw new Error(`Model returned no ${TOOL_NAME} call (stopReason: ${response.stopReason})`);
       if (response.stopReason === "max_tokens") throw new Error("Model ran out of output tokens mid-extraction");
