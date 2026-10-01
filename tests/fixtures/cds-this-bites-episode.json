@@ -1,0 +1,30 @@
+{
+  "id": "fis-718413877-f1a11b199499737e74c6c94583b15dba",
+  "title": "Freshwater Food & Wine Festival, Café Corazón and turkey talk",
+  "profiles": [
+    { "href": "/v1/profiles/document" },
+    { "href": "/v1/profiles/podcast-episode", "rels": ["type"] },
+    { "href": "/v1/profiles/publishable", "rels": ["interface"] },
+    { "href": "/v1/profiles/listenable", "rels": ["interface"] },
+    { "href": "/v1/profiles/has-audio", "rels": ["interface"] }
+  ],
+  "owners": [{ "href": "https://organization.api.npr.org/v4/services/s921" }],
+  "publishDateTime": "2026-09-18T15:00:00.000Z",
+  "collections": [{ "href": "/v1/documents/718413877", "rels": ["podcast-channel", "theme", "slug"] }],
+  "audio": [{ "href": "#/assets/fis-718413877-f1a11b199499737e74c6c94583b15dba-enclosure-audio", "rels": ["headline", "primary"] }],
+  "episodeGuid": "prx_13397_aa88e568-7b82-41aa-bac6-62a39b740d7c",
+  "teaser": "<p>In this episode's serving of the latest Milwaukee food news and festival highlights:</p><ul>\n<li>We break down the Freshwater Food &amp; Wine Festival happening on the Summerfest grounds.</li>\n<li>We bid a bittersweet farewell to Café Corazón in Bay View.</li>\n</ul>",
+  "webPages": [
+    { "href": "https://play.prx.org/listen?ge=prx_13397_aa88e568-7b82-41aa-bac6-62a39b740d7c&uf=https%3A%2F%2Fpublicfeeds.net%2Ff%2F13397%2Fthis-bites", "rels": ["canonical"] }
+  ],
+  "assets": {
+    "fis-718413877-f1a11b199499737e74c6c94583b15dba-enclosure-audio": {
+      "duration": 999,
+      "enclosures": [
+        { "href": "https://dts.podtrac.com/redirect.mp3/dovetail.prxu.org/13397/aa88e568-7b82-41aa-bac6-62a39b740d7c/ThisBites_091826_FullPodcast.mp3", "type": "audio/mpeg" }
+      ],
+      "id": "fis-718413877-f1a11b199499737e74c6c94583b15dba-enclosure-audio",
+      "isDownloadable": true
+    }
+  }
+}
