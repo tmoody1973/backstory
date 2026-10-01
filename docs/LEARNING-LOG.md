@@ -35,4 +35,16 @@ Dated entries: what we expected, what happened, what we now believe.
 - Haiku measured cost: Uniquely Milwaukee 3,363 in / 817 out tokens ≈ $0.008; This Bites 7,283 in / 3,781 out ≈ $0.029 (at $1.10 / $5.50 per million).
 - Most of This Bites' unpinned places are Transcribe misspellings ("Loop and Iris", "Cochina Fipina", "Nompong") or places too new for Amazon's map data.
 
+**Topics: Claude Haiku 4.5 vs TypeSafe Jev (jev-1.13.0), same two transcripts, 13-topic vocabulary:**
+
+| Show | Haiku topics | Jev topics (probability) | Jev's next-highest |
+|---|---|---|---|
+| Uniquely Milwaukee | education, business, civic-life | civic-life 0.97, education 0.92, business 0.59 | community 0.16 |
+| This Bites | food-drink, festival, community | food-drink 0.99, festival 0.95, business 0.94 | other 0.11 |
+
+- Jev's scores separate cleanly: everything it kept is at 0.59 or above, everything it dropped is at 0.16 or below. Those are usable confidence numbers for editors.
+- Jev's quotes pass the evidence check by construction (it picks a transcript passage; code copies it). But for This Bites it picked the same generic show intro as the quote for both food-drink and festival, and one Uniquely Milwaukee quote names the facility resident the participant rule excludes.
+- Jev cost: 6,440 and 20,708 input tokens, $0.0003 and $0.0009 at $0.042 per million.
+- Two episodes can't settle it: the labels mostly agree, and each model wins one judgment call ("business" vs "community" for a food-news episode).
+
 **What we now believe:**
