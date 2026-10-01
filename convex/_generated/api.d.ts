@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as aws_extract from "../aws/extract.js";
 import type * as aws_geocode from "../aws/geocode.js";
 import type * as aws_transcribe from "../aws/transcribe.js";
@@ -15,6 +16,7 @@ import type * as extractions from "../extractions.js";
 import type * as geocoding from "../geocoding.js";
 import type * as ingest from "../ingest.js";
 import type * as jobs from "../jobs.js";
+import type * as lib_attribution from "../lib/attribution.js";
 import type * as lib_cds from "../lib/cds.js";
 import type * as lib_evidence from "../lib/evidence.js";
 import type * as lib_extraction from "../lib/extraction.js";
@@ -23,6 +25,7 @@ import type * as lib_shows from "../lib/shows.js";
 import type * as lib_steps from "../lib/steps.js";
 import type * as lib_taxonomy from "../lib/taxonomy.js";
 import type * as lib_transcribeOutput from "../lib/transcribeOutput.js";
+import type * as public_ from "../public.js";
 import type * as stories from "../stories.js";
 import type * as transcripts from "../transcripts.js";
 
@@ -33,6 +36,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   "aws/extract": typeof aws_extract;
   "aws/geocode": typeof aws_geocode;
   "aws/transcribe": typeof aws_transcribe;
@@ -40,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   geocoding: typeof geocoding;
   ingest: typeof ingest;
   jobs: typeof jobs;
+  "lib/attribution": typeof lib_attribution;
   "lib/cds": typeof lib_cds;
   "lib/evidence": typeof lib_evidence;
   "lib/extraction": typeof lib_extraction;
@@ -48,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   "lib/steps": typeof lib_steps;
   "lib/taxonomy": typeof lib_taxonomy;
   "lib/transcribeOutput": typeof lib_transcribeOutput;
+  public: typeof public_;
   stories: typeof stories;
   transcripts: typeof transcripts;
 }>;
