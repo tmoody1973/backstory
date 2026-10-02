@@ -17,3 +17,9 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: Script self-checks
+        run: |
+          python3 scripts/score_eval.py --check
+          python3 scripts/export_archive.py --check
+          python3 scripts/build_vocabulary.py --check
+          python3 scripts/bakeoff_deepgram.py --check

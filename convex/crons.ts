@@ -5,9 +5,8 @@ const crons = cronJobs();
 
 // PRD Operations: check CDS daily for new episodes (12:00 / 12:15 UTC, 7 a.m. Milwaukee).
 // Upserts are idempotent, so overlapping runs are harmless.
-// Paused until the first live run of each show passes (Task 11, MOO-852). Re-enable both lines then.
-// crons.cron("ingest This Bites", "0 12 * * *", internal.ingest.ingestShow, { showSlug: "this-bites", limit: 10 });
-// crons.cron("ingest Uniquely Milwaukee", "15 12 * * *", internal.ingest.ingestShow, { showSlug: "uniquely-milwaukee", limit: 10 });
+crons.cron("ingest This Bites", "0 12 * * *", internal.ingest.ingestShow, { showSlug: "this-bites", limit: 10 });
+crons.cron("ingest Uniquely Milwaukee", "15 12 * * *", internal.ingest.ingestShow, { showSlug: "uniquely-milwaukee", limit: 10 });
 
 // An action that dies outside its error handler (timeout, deploy mid-run) never reports failure;
 // the sweeper sends such jobs through the normal retry → needs_editor path.
