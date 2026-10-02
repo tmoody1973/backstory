@@ -4,6 +4,8 @@ import { v } from "convex/values";
 // Literal lists mirror convex/lib/shows.ts and convex/lib/taxonomy.ts.
 // tests/schema.test.ts fails if they drift apart.
 export const reviewStatusValidator = v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected"));
+/** Why an editor removed an item: the AI got it wrong, it is true but shouldn't be on Alexa, or it's too minor to matter. */
+export const removeReasonValidator = v.union(v.literal("wrong"), v.literal("sensitive"), v.literal("minor"));
 export const entityTypeValidator = v.union(
   v.literal("person"), v.literal("organization"), v.literal("place"), v.literal("event"), v.literal("dish"),
 );
@@ -47,9 +49,12 @@ export default defineSchema({
     approvedRunId: v.optional(v.string()),
     reviewStatus: reviewStatusValidator,
     doNotUse: v.boolean(),
+    approvedBy: v.optional(v.string()), // verified email of the editor who approved the live run
+    approvedAt: v.optional(v.number()),
   })
     .index("by_cdsId", ["cdsId"])
-    .index("by_showSlug_and_publishedAt", ["showSlug", "publishedAt"]),
+    .index("by_showSlug_and_publishedAt", ["showSlug", "publishedAt"])
+    .index("by_reviewStatus_and_publishedAt", ["reviewStatus", "publishedAt"]),
 
   sources: defineTable({
     storyId: v.id("stories"),
@@ -77,6 +82,7 @@ export default defineSchema({
     relatedPlace: v.optional(v.string()), // dish → the restaurant that serves it
     subjectConfidence: v.optional(v.number()), // people only: Jev's probability they're a real subject, not a passing mention
     reviewStatus: reviewStatusValidator,
+    removeReason: v.optional(removeReasonValidator),
     doNotUse: v.boolean(),
     searchText: v.string(), // normalized name + related place + quote
   })
@@ -98,6 +104,7 @@ export default defineSchema({
     fieldGuideVenueId: v.optional(v.string()), // matched in Plan 2
     lastConfirmedAt: v.optional(v.number()), // restaurant freshness, Plan 5
     reviewStatus: reviewStatusValidator,
+    removeReason: v.optional(removeReasonValidator),
   })
     .index("by_storyId_and_runId", ["storyId", "runId"])
     .index("by_mentionId", ["mentionId"]),
@@ -110,6 +117,7 @@ export default defineSchema({
     ...quoteFields,
     basis: v.literal("transcript"),
     reviewStatus: reviewStatusValidator,
+    removeReason: v.optional(removeReasonValidator),
   }).index("by_storyId_and_runId", ["storyId", "runId"]),
 
   storyActions: defineTable({
@@ -120,6 +128,7 @@ export default defineSchema({
     placeMentionId: v.optional(v.id("mentions")),
     ...quoteFields,
     reviewStatus: reviewStatusValidator,
+    removeReason: v.optional(removeReasonValidator),
   }).index("by_storyId_and_runId", ["storyId", "runId"]),
 
   speakerNames: defineTable({

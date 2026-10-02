@@ -51,24 +51,49 @@ export function deepgramKeyterms(profile: ShowProfile, showNotes: string, knownN
   return terms;
 }
 
+interface Word {
+  word?: string;
+  punctuated_word?: string;
+  speaker?: number;
+  start: number;
+  end: number;
+}
+
 interface Utterance {
   speaker?: number;
   start: number;
   end: number;
   transcript: string;
+  words?: Word[];
+}
+
+const segment = (speaker: number | undefined, start: number, end: number, text: string): Segment => ({
+  speaker: `spk_${speaker ?? 0}`, startMs: Math.round(start * 1000), endMs: Math.round(end * 1000), text: text.trim(),
+});
+
+/**
+ * Deepgram splits utterances only on pauses, so a narrator line that runs straight into an interview clip
+ * arrives as one utterance. Its words carry the right speakers, so we split wherever the word-level speaker changes.
+ */
+// ponytail: no smoothing of 1–2 word speaker flips; add it if editors see many stray one-word turns
+function splitBySpeaker(utterance: Utterance): Segment[] {
+  const words = utterance.words ?? [];
+  if (words.length === 0) return [segment(utterance.speaker, utterance.start, utterance.end, utterance.transcript)];
+  const turns: Word[][] = [];
+  for (const word of words) {
+    const last = turns.at(-1);
+    if (last && last[0].speaker === word.speaker) last.push(word);
+    else turns.push([word]);
+  }
+  return turns.map((turn) =>
+    segment(turn[0].speaker, turn[0].start, turn.at(-1)!.end, turn.map((w) => w.punctuated_word ?? w.word ?? "").join(" ")),
+  );
 }
 
 export function parseUtterances(response: unknown): Segment[] {
   const utterances = (response as { results?: { utterances?: Utterance[] } })?.results?.utterances;
   if (!Array.isArray(utterances)) throw new Error("Deepgram response has no utterances; was utterances=true set?");
-  return utterances
-    .filter((u) => u.transcript.trim())
-    .map((u) => ({
-      speaker: `spk_${u.speaker ?? 0}`,
-      startMs: Math.round(u.start * 1000),
-      endMs: Math.round(u.end * 1000),
-      text: u.transcript.trim(),
-    }));
+  return utterances.flatMap(splitBySpeaker).filter((s) => s.text);
 }
 
 const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
