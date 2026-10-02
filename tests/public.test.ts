@@ -191,3 +191,14 @@ describe("getStory image", () => {
     expect((await t.query(api.public.getStory, { storyId }))?.imageUrl).toBe("https://f.prxu.org/tb.jpg");
   });
 });
+
+describe("getStory with a bad id", () => {
+  it("returns null for an id that isn't a story, instead of throwing", async () => {
+    const t = makeTest();
+    const storyId = await seedStory(t);
+    const mentionLike = await t.run((ctx) => ctx.db.insert("jobs", { kind: "extract", storyId, status: "done", attempts: 0, updatedAt: 0 }));
+    for (const bad of ["jn7000000000000000000000000000000", "abc", mentionLike]) {
+      expect(await t.query(api.public.getStory, { storyId: bad })).toBeNull();
+    }
+  });
+});

@@ -40,6 +40,10 @@ describe("relevantEnough", () => {
     expect(relevantEnough("art resale shop west allis", text)).toBe(false); // only "shop"
     expect(relevantEnough("the festival at cafe corazon", text)).toBe(true);
   });
+  it("ignores the show names a listener says out loud", () => {
+    expect(relevantEnough("This Bites beer festival", text)).toBe(true); // without the show name: beer, festival → 1 of 2
+    expect(relevantEnough("Uniquely Milwaukee beer festival", text)).toBe(true);
+  });
   it("ignores filler words and plural endings", () => {
     expect(relevantEnough("that Milwaukee story about the festivals", text)).toBe(true);
     expect(relevantEnough("the story about Milwaukee", text)).toBe(false); // nothing meaningful left
@@ -87,5 +91,13 @@ describe("public.searchStoryCards", () => {
     await published(t);
     expect(await t.query(api.public.searchStoryCards, { text: "festival", showSlug: "uniquely-milwaukee" })).toEqual([]);
     expect(await t.query(api.public.searchStoryCards, { text: "   " })).toEqual([]);
+  });
+
+  it("a place whose mention an editor kept off Alexa stops matching", async () => {
+    const t = makeTest();
+    await published(t, { title: "Festival preview" });
+    const [cafe] = (await t.run((ctx) => ctx.db.query("mentions").take(10))).filter((m) => m.name === "Café Corazón");
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.setDoNotUse, { target: { table: "mentions", id: cafe._id }, doNotUse: true });
+    expect(await t.query(api.public.searchStoryCards, { text: "Corazón" })).toEqual([]);
   });
 });
