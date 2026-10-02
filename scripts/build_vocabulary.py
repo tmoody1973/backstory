@@ -4,8 +4,8 @@
     python3 scripts/build_vocabulary.py --check  # run the self-check
 
 Sources: show hosts, plus the people, places and organizations in the labeled answer key
-(human spot-checked spellings). Add names by hand to docs/transcribe-vocabulary-extra.txt,
-one per line. Format rules: https://docs.aws.amazon.com/transcribe/latest/dg/custom-vocabulary-create-table.html
+(human spot-checked spellings), plus convex/lib/nameCorrections.json: "names" to spell right and
+"corrections" ({heard, correct}) that teach Transcribe to write a mishearing as the correct spelling. Format rules: https://docs.aws.amazon.com/transcribe/latest/dg/custom-vocabulary-create-table.html
 """
 
 import json
@@ -15,7 +15,7 @@ import sys
 import unicodedata
 
 OUT = "docs/transcribe-vocabulary.tsv"
-EXTRA = "docs/transcribe-vocabulary-extra.txt"
+CORRECTIONS = "convex/lib/nameCorrections.json"  # shared with the Deepgram step
 HOSTS = ["Tarik Moody", "Ann Christenson", "Kim Shine", "Radio Milwaukee", "This Bites", "Uniquely Milwaukee"]
 TYPES = {"person", "place", "organization"}
 MAX_BYTES = 50_000  # Transcribe's limit for a vocabulary file
@@ -68,10 +68,10 @@ def build() -> None:
     names = list(HOSTS)
     labels = json.load(open("docs/eval/answer-key.json"))["labels"]
     names += [label["value"] for label in labels if label["label_type"] in TYPES]
-    mappings: list[tuple[str, str]] = []
-    if os.path.exists(EXTRA):
-        extra, mappings = extra_entries(open(EXTRA).read().splitlines())
-        names += extra
+    shared = json.load(open(CORRECTIONS))
+    lines = shared["names"] + [f"{c['heard']} => {c['correct']}" for c in shared["corrections"]]
+    extra, mappings = extra_entries(lines)
+    names += extra
     mapped = {heard.lower() for heard, _ in mappings}
     text = table(mappings + [row for row in rows(names) if row[0].lower() not in mapped])
     assert len(text.encode()) <= MAX_BYTES, f"vocabulary is {len(text.encode())} bytes; Transcribe allows {MAX_BYTES}"

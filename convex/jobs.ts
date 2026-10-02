@@ -17,10 +17,15 @@ export function retryDelayMs(attempt: number): number {
   return 60_000 * 4 ** (attempt - 1);
 }
 
+/** Decision 009: Deepgram Nova-3 transcribes by default; TRANSCRIBER=transcribe switches back to Amazon Transcribe. */
+export function transcribeStep(): StepRef {
+  return process.env.TRANSCRIBER === "transcribe" ? internal.aws.transcribe.start : internal.deepgram.run;
+}
+
 function stepFor(kind: JobKind): StepRef {
   switch (kind) {
     case "transcribe":
-      return internal.aws.transcribe.start;
+      return transcribeStep();
     case "extract":
       return internal.aws.extract.run;
     case "geocode":

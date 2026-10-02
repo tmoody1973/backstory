@@ -1,7 +1,6 @@
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
-import { enqueue } from "./jobs";
+import { enqueue, transcribeStep } from "./jobs";
 import { buildDocumentUrl } from "./lib/cds";
 
 export const upsertEpisode = internalMutation({
@@ -35,7 +34,7 @@ export const upsertEpisode = internalMutation({
     await ctx.db.insert("sources", {
       storyId, kind: "cds_document", ref: buildDocumentUrl(episode.cdsId), fetchedAt: Date.now(),
     });
-    await enqueue(ctx, "transcribe", storyId, internal.aws.transcribe.start);
+    await enqueue(ctx, "transcribe", storyId, transcribeStep());
     return { storyId, created: true };
   },
 });

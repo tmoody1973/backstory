@@ -94,3 +94,25 @@ describe("jobs.sweepStale", () => {
     expect((await t.run((ctx) => ctx.db.get("stories", storyId)))?.stage).toBe("needs_editor");
   });
 });
+
+describe("transcribeStep (decision 009)", () => {
+  const scheduledFor = async (t: TestConvex) =>
+    (await t.run((ctx) => ctx.db.system.query("_scheduled_functions").collect())).map((s) => s.name);
+
+  it("sends new episodes to Deepgram by default", async () => {
+    delete process.env.TRANSCRIBER;
+    const t = makeTest();
+    const storyId = await seedStory(t);
+    await t.mutation(internal.admin.retranscribe, { storyId });
+    expect(await scheduledFor(t)).toContain("deepgram:run");
+  });
+
+  it("switches back to Amazon Transcribe with TRANSCRIBER=transcribe", async () => {
+    process.env.TRANSCRIBER = "transcribe";
+    const t = makeTest();
+    const storyId = await seedStory(t);
+    await t.mutation(internal.admin.retranscribe, { storyId });
+    expect(await scheduledFor(t)).toContain("aws/transcribe:start");
+    delete process.env.TRANSCRIBER;
+  });
+});

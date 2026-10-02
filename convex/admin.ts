@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
-import { enqueue } from "./jobs";
+import { enqueue, transcribeStep } from "./jobs";
 import { isLowConfidence } from "./lib/geocode";
 
 // A run holds at most 40 mentions, 3 topics and 10 actions (extraction schema).
@@ -64,6 +64,6 @@ export const retranscribe = internalMutation({
   args: { storyId: v.id("stories") },
   handler: async (ctx, { storyId }) => {
     if (!(await ctx.db.get("stories", storyId))) throw new Error(`Story ${storyId} not found`);
-    await enqueue(ctx, "transcribe", storyId, internal.aws.transcribe.start);
+    await enqueue(ctx, "transcribe", storyId, transcribeStep());
   },
 });
