@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
 import { enqueue, transcribeStep } from "./jobs";
 import { approveRun } from "./lib/approveRun";
+import { refreshStorySearch } from "./lib/storySearch";
 
 /**
  * PRD fallback for the demo: approve every pending row in a story's latest run at once.
@@ -17,6 +18,7 @@ export const approveLatestRunForDemo = internalMutation({
     if (!story?.latestRunId || !story.proposedSummary) throw new Error("Story has no extraction run to approve yet");
     await approveRun(ctx, storyId, story.latestRunId);
     await ctx.db.patch("stories", storyId, { summary: story.proposedSummary, approvedRunId: story.latestRunId, reviewStatus: "approved" });
+    await refreshStorySearch(ctx, storyId);
   },
 });
 
@@ -48,5 +50,15 @@ export const retranscribe = internalMutation({
   handler: async (ctx, { storyId }) => {
     if (!(await ctx.db.get("stories", storyId))) throw new Error(`Story ${storyId} not found`);
     await enqueue(ctx, "transcribe", storyId, transcribeStep());
+  },
+});
+
+/** Backfill or repair: recompute every story's search text (≤ 1000 stories). */
+export const refreshAllStorySearch = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const stories = await ctx.db.query("stories").take(1000);
+    for (const story of stories) await refreshStorySearch(ctx, story._id);
+    return { refreshed: stories.length };
   },
 });

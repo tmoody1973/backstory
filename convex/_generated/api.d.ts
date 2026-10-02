@@ -36,6 +36,7 @@ import type * as lib_reviewers from "../lib/reviewers.js";
 import type * as lib_shows from "../lib/shows.js";
 import type * as lib_speakers from "../lib/speakers.js";
 import type * as lib_steps from "../lib/steps.js";
+import type * as lib_storySearch from "../lib/storySearch.js";
 import type * as lib_taxonomy from "../lib/taxonomy.js";
 import type * as lib_transcribeOutput from "../lib/transcribeOutput.js";
 import type * as public_ from "../public.js";
@@ -81,6 +82,7 @@ declare const fullApi: ApiFromModules<{
   "lib/shows": typeof lib_shows;
   "lib/speakers": typeof lib_speakers;
   "lib/steps": typeof lib_steps;
+  "lib/storySearch": typeof lib_storySearch;
   "lib/taxonomy": typeof lib_taxonomy;
   "lib/transcribeOutput": typeof lib_transcribeOutput;
   public: typeof public_;

@@ -28,6 +28,7 @@ export const upsertEpisode = internalMutation({
       return { storyId: existing._id, created: false };
     }
     const storyId = await ctx.db.insert("stories", {
+      searchText: "", // filled when an editor publishes the story
       ...episode,
       contentType: "episode",
       stage: "ingested",
