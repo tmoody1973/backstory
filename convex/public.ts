@@ -16,8 +16,11 @@ const MAX_ROWS_PER_RUN = 200;
 const approved = <T extends { reviewStatus: string }>(rows: T[]) => rows.filter((row) => row.reviewStatus === "approved");
 
 export const getStory = query({
-  args: { storyId: v.id("stories") },
-  handler: async (ctx, { storyId }) => {
+  // A plain string, so an id that isn't a story (garbled, invented, another table's) is "not found", not an error.
+  args: { storyId: v.string() },
+  handler: async (ctx, args) => {
+    const storyId = ctx.db.normalizeId("stories", args.storyId);
+    if (!storyId) return null;
     const story = await ctx.db.get("stories", storyId);
     const runId = story?.approvedRunId;
     if (!story || !runId || story.reviewStatus !== "approved" || story.doNotUse || !story.summary) return null;
