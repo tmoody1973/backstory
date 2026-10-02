@@ -1,9 +1,9 @@
 {
  "mode": "equal-hints",
  "totals": {
-  "transcribe": 70,
-  "deepgram": 75,
-  "names": 94
+  "transcribe": 235,
+  "deepgram": 267,
+  "names": 319
  },
  "episodes": {
   "E01": {
@@ -50,6 +50,22 @@
    "keyterms": 16,
    "duration_sec": 1661.8318
   },
+  "E03": {
+   "names": 13,
+   "transcribe": 10,
+   "deepgram": 12,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "KISS Korean BBQ",
+    "Nadi Plates"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 16,
+   "duration_sec": 1078.5958
+  },
   "E04": {
    "names": 17,
    "transcribe": 15,
@@ -66,6 +82,23 @@
    },
    "keyterms": 20,
    "duration_sec": 1342.8245
+  },
+  "E05": {
+   "names": 20,
+   "transcribe": 19,
+   "deepgram": 19,
+   "only_transcribe": [
+    "Five-er Forum"
+   ],
+   "only_deepgram": [
+    "Z\u00f3calo Food Park"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 23,
+   "duration_sec": 1327.8302
   },
   "E07": {
    "names": 14,
@@ -86,6 +119,62 @@
    "keyterms": 17,
    "duration_sec": 1041.4758
   },
+  "E08": {
+   "names": 35,
+   "transcribe": 28,
+   "deepgram": 30,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "Becher Meats",
+    "Riemer Family Farm"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 38,
+   "duration_sec": 1719.5886
+  },
+  "E09": {
+   "names": 21,
+   "transcribe": 14,
+   "deepgram": 16,
+   "only_transcribe": [
+    "Summer of \u201985"
+   ],
+   "only_deepgram": [
+    "Deer District",
+    "Explorium Distilled",
+    "Jerkin' Me Crazy"
+   ],
+   "speakers": {
+    "transcribe": 3,
+    "deepgram": 3
+   },
+   "keyterms": 24,
+   "duration_sec": 825.4171
+  },
+  "E10": {
+   "names": 43,
+   "transcribe": 31,
+   "deepgram": 35,
+   "only_transcribe": [
+    "Central Standard Crafthouse & Kitchen"
+   ],
+   "only_deepgram": [
+    "Erik Kennedy",
+    "EsterEv",
+    "Pabst Blue Ribbon",
+    "Ugur Grill",
+    "Yancey's Fancy"
+   ],
+   "speakers": {
+    "transcribe": 3,
+    "deepgram": 3
+   },
+   "keyterms": 46,
+   "duration_sec": 1352.5681
+  },
   "E11": {
    "names": 5,
    "transcribe": 3,
@@ -100,6 +189,151 @@
    },
    "keyterms": 8,
    "duration_sec": 264.0718
+  },
+  "E12": {
+   "names": 14,
+   "transcribe": 10,
+   "deepgram": 14,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "Mackenzie Savin",
+    "Oriental Theatre",
+    "Sean Kafer",
+    "Vaun Mayes"
+   ],
+   "speakers": {
+    "transcribe": 5,
+    "deepgram": 4
+   },
+   "keyterms": 17,
+   "duration_sec": 888.32
+  },
+  "E13": {
+   "names": 18,
+   "transcribe": 12,
+   "deepgram": 15,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "Advance Peace",
+    "Froedtert",
+    "ThriveOn King"
+   ],
+   "speakers": {
+    "transcribe": 3,
+    "deepgram": 3
+   },
+   "keyterms": 21,
+   "duration_sec": 262.81793
+  },
+  "E14": {
+   "names": 8,
+   "transcribe": 5,
+   "deepgram": 5,
+   "only_transcribe": [
+    "Danya Littlefield"
+   ],
+   "only_deepgram": [
+    "Raquel Aleman"
+   ],
+   "speakers": {
+    "transcribe": 5,
+    "deepgram": 5
+   },
+   "keyterms": 11,
+   "duration_sec": 262.34775
+  },
+  "E15": {
+   "names": 12,
+   "transcribe": 10,
+   "deepgram": 12,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "FunkClub Wagon",
+    "MKE River Round-Up music series"
+   ],
+   "speakers": {
+    "transcribe": 5,
+    "deepgram": 5
+   },
+   "keyterms": 15,
+   "duration_sec": 189.44
+  },
+  "E16": {
+   "names": 9,
+   "transcribe": 3,
+   "deepgram": 8,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "Farmfork Culinary School and Cafe",
+    "Herb Kohl Philanthropies",
+    "Joann Harris-Comodore",
+    "Neu-Life Community Development",
+    "NeuVue"
+   ],
+   "speakers": {
+    "transcribe": 5,
+    "deepgram": 5
+   },
+   "keyterms": 12,
+   "duration_sec": 253.15262
+  },
+  "E17": {
+   "names": 6,
+   "transcribe": 5,
+   "deepgram": 6,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "Evan Maruszewski"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 4
+   },
+   "keyterms": 9,
+   "duration_sec": 216.63344
+  },
+  "E18": {
+   "names": 8,
+   "transcribe": 5,
+   "deepgram": 6,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "Jeffrey \u201cDuke\u201d Roufus"
+   ],
+   "speakers": {
+    "transcribe": 6,
+    "deepgram": 5
+   },
+   "keyterms": 11,
+   "duration_sec": 331.33713
+  },
+  "E19": {
+   "names": 5,
+   "transcribe": 3,
+   "deepgram": 3,
+   "only_transcribe": [],
+   "only_deepgram": [],
+   "speakers": {
+    "transcribe": 6,
+    "deepgram": 6
+   },
+   "keyterms": 8,
+   "duration_sec": 291.31757
+  },
+  "E20": {
+   "names": 13,
+   "transcribe": 10,
+   "deepgram": 11,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "U.S. Supreme Court"
+   ],
+   "speakers": {
+    "transcribe": 2,
+    "deepgram": 2
+   },
+   "keyterms": 16,
+   "duration_sec": 265.7698
   }
  }
 }

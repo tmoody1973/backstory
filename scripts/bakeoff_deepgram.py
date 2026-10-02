@@ -19,6 +19,9 @@ import urllib.request
 
 HOSTS = ["Tarik Moody", "Ann Christenson", "Kim Shine"]
 NAME_TYPES = {"person", "place", "organization"}
+# Deepgram entity labels → our label types (other labels such as CARDINAL or OCCUPATION are ignored)
+ENTITY_TYPES = {"NAME": "person", "NAME_GIVEN": "person", "NAME_FAMILY": "person",
+                "LOCATION": "place", "LOCATION_ADDRESS": "place", "ORGANIZATION": "organization"}
 KEYTERM_WORD_BUDGET = 300  # Deepgram allows 500 tokens of keyterms; ~1.3 tokens per word leaves headroom
 EVAL = "docs/eval"
 
@@ -57,7 +60,8 @@ def keyterms(show_notes: str) -> list[str]:
 
 
 def deepgram(audio_url: str, terms: list[str], api_key: str) -> dict:
-    params = [("model", "nova-3"), ("smart_format", "true"), ("diarize", "true")] + [("keyterm", t) for t in terms]
+    params = [("model", "nova-3"), ("smart_format", "true"), ("diarize", "true"), ("detect_entities", "true")]
+    params += [("keyterm", t) for t in terms]
     request = urllib.request.Request(
         "https://api.deepgram.com/v1/listen?" + urllib.parse.urlencode(params),
         data=json.dumps({"url": audio_url}).encode(),
@@ -80,7 +84,7 @@ def main(episodes: list[str]) -> None:
     stories = {s["cdsId"]: s for s in convex("stories")}
     segments = convex("transcriptSegments")
     totals = {"transcribe": 0, "deepgram": 0, "names": 0}
-    results = {}
+    results, entity_output = {}, {}
     for ep in episodes:
         story = stories[picks[int(ep[1:]) - 1]["cdsId"]]
         transcribe_text = " ".join(s["text"] for s in sorted(
@@ -91,6 +95,8 @@ def main(episodes: list[str]) -> None:
         result = deepgram(story["audioUrl"], terms, api_key)
         alt = result["results"]["channels"][0]["alternatives"][0]
         dg_text = alt["transcript"]
+        entity_output[ep] = [{"label_type": ENTITY_TYPES[e["label"]], "value": e["value"]}
+                             for e in alt.get("entities", []) if e["label"] in ENTITY_TYPES]
         dg_speakers = len({w.get("speaker") for w in alt.get("words", []) if "speaker" in w})
         tr_speakers = len({s["speaker"] for s in segments if s["storyId"] == story["_id"]})
         hits_t = [n for n in names if found(n, transcribe_text)]
@@ -106,6 +112,8 @@ def main(episodes: list[str]) -> None:
         print(f"     only Transcribe: {results[ep]['only_transcribe'][:6]}")
         print(f"     only Deepgram:   {results[ep]['only_deepgram'][:6]}")
     print(f"\nTOTAL names spelled right: Transcribe {totals['transcribe']}/{totals['names']}  Deepgram {totals['deepgram']}/{totals['names']}")
+    json.dump({"model": "deepgram nova-3 detect_entities", "episodes": entity_output},
+              open(f"{EVAL}/deepgram-entities-output.json", "w"), indent=1, ensure_ascii=False)
     mode = "equal-hints" if "--equal-hints" in sys.argv else "show-notes-hints"
     json.dump({"mode": mode, "totals": totals, "episodes": results}, open(f"{EVAL}/bakeoff-deepgram-{mode}.json", "w"), indent=1)
 

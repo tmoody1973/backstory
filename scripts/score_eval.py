@@ -8,6 +8,7 @@ Recall:    of what the answer key holds, how much the model found.
 """
 
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -89,6 +90,8 @@ def main() -> None:
     jev = by_episode(json.load(open(f"{EVAL}/jev-topics.json"))["episodes"])
     judged = by_episode(json.load(open(f"{EVAL}/haiku-jev-judge-output.json"))["episodes"])
     sonnet = by_episode(json.load(open(f"{EVAL}/sonnet-output.json"))["episodes"])
+    dg_path = f"{EVAL}/deepgram-entities-output.json"
+    dg_entities = by_episode(json.load(open(dg_path))["episodes"]) if os.path.exists(dg_path) else {}
     all_eps = set(key) | set(haiku)
     for title, eps in [("ALL 20 EPISODES", all_eps), ("BLIND 5 (control)", all_eps & BLIND),
                        ("SUGGESTION 15", all_eps - BLIND)]:
@@ -97,6 +100,9 @@ def main() -> None:
         table("Jev", score(jev, key, eps), ["topic"])
         table("H+judge", score(judged, key, eps), ["person"])
         table("Sonnet", score(sonnet, key, eps), TYPES)
+        if dg_entities:
+            dg_eps = eps & set(dg_entities)
+            table("DG-ent", score(dg_entities, key, dg_eps), ["person", "place", "organization"])
 
 
 if __name__ == "__main__":
