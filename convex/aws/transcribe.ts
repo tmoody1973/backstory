@@ -1,6 +1,9 @@
 "use node";
 
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
+import { Readable } from "node:stream";
+import type { ReadableStream as WebReadableStream } from "node:stream/web";
 import { GetTranscriptionJobCommand, StartTranscriptionJobCommand, TranscribeClient } from "@aws-sdk/client-transcribe";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
@@ -37,11 +40,20 @@ export const start = internalAction({
       }
       const { audioUrl } = await ctx.runQuery(internal.transcripts.audioFor, { storyId: args.storyId });
       const audio = await fetch(audioUrl); // Podtrac redirects to the PRX file; fetch follows redirects
-      if (!audio.ok) throw new Error(`Audio download failed: HTTP ${audio.status} for ${audioUrl}`);
+      if (!audio.ok || !audio.body) throw new Error(`Audio download failed: HTTP ${audio.status} for ${audioUrl}`);
       const audioKey = `audio/${args.storyId}.mp3`;
-      await new S3Client({ region }).send(
-        new PutObjectCommand({ Bucket: bucket, Key: audioKey, Body: Buffer.from(await audio.arrayBuffer()), ContentType: "audio/mpeg" }),
-      );
+      // Stream to S3 in 5 MB parts instead of buffering: a 56-minute episode overflowed the 512 MB action limit.
+      await new Upload({
+        client: new S3Client({ region }),
+        params: {
+          Bucket: bucket,
+          Key: audioKey,
+          Body: Readable.fromWeb(audio.body as unknown as WebReadableStream),
+          ContentType: "audio/mpeg",
+        },
+        queueSize: 2,
+        partSize: 5 * 1024 * 1024,
+      }).done();
       const jobName = `backstory-${args.storyId}-${Date.now()}`;
       const vocabulary = process.env.TRANSCRIBE_VOCABULARY_NAME;
       await transcribe.send(
