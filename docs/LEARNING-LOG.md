@@ -48,3 +48,15 @@ Dated entries: what we expected, what happened, what we now believe.
 - Two episodes can't settle it: the labels mostly agree, and each model wins one judgment call ("business" vs "community" for a food-news episode).
 
 **What we now believe:**
+
+## 2026-10-02: the review UI meets real episodes (MOO-853)
+
+**What we expected:** an editor could review one episode in under 10 minutes (the PRD goal), and the first version of the page (every item with Approve / Reject / Do not use) would be good enough for the demo.
+
+**What happened:**
+- Tarik reviewed and published a 38-item This Bites episode ("Frugal dining and new restaurants") in **1–3 minutes** on the redesigned page (decision 011: exceptions first, Keep/Remove with a reason, "What Alexa will say" on top). Five episodes are published: two This Bites, three Uniquely Milwaukee.
+- Live checks: a call with no sign-in is refused and logged by Convex; three names removed as "keep off Alexa" (a private guest, Scott Walker, Tom Barrett) are absent from `getStory` and return no search results.
+- Real use found problems tests never did: the site's 88Nine mini-player covered the publish bar on production; Podtrac's tracking link is blocked by ad blockers, so clips were silent; a saved card moved sections and took its "saved" message with it; mixed speakers were *our* parsing bug (Deepgram labels every word; we labeled whole pause-to-pause utterances), not Deepgram's diarization.
+- A second fresh code review caught three privacy gaps the first build missed (a person could be pinned through the backend; correcting a removed place's pin re-published it; "keep off Alexa" removals were lost on re-processing). All fixed test-first before shipping.
+
+**What we now believe:** the review page is fast enough when it asks only about what the machine is unsure of. The biggest risks are now visual and environmental (things overlapping, blockers, browsers), which unit tests can't see. Every UI change needs one signed-in look in a real browser before it ships.
