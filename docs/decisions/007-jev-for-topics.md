@@ -9,7 +9,7 @@
 - Jev for topics. 93% of its topics accepted, 91% of the answer key's topics found, and 7 of 7 on the 5 blind control episodes. Adds a second vendor and a second API key; about $0.001 per episode.
 - Jev for topics and as a judge on Haiku's people. Likely fixes Haiku's 60% people precision, but not yet built or measured.
 
-**What we chose and why:** Jev for topics (pending Tarik's approval). It's the only option that meets the PRD target on the labeled set. Results: `docs/eval/results-2026-10-01.md`.
+**What we chose and why:** Jev for topics (Tarik approved, 2026-10-01, on Claude's recommendation). It's the only option that meets the PRD target on the labeled set. Results: `docs/eval/results-2026-10-01.md`.
 
 **What we gave up:** A second vendor (TypeSafe) in the pipeline, with its own key and outage risk; Jev's quotes are whole transcript passages, sometimes a generic intro, rather than the tightest sentence; and the answer key was made by an AI agent (Manus), spot-checked by a person on 4 of 20 episodes, not labeled by hand.
 

@@ -5,6 +5,7 @@ import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { buildTranscriptIndex } from "../lib/evidence";
 import { applyEvidence, buildExtractionPrompt, extractionJsonSchema, extractionSchema, trimToCaps } from "../lib/extraction";
+import { jevTopicsFor } from "../lib/jevTopics";
 import { getShowProfile } from "../lib/shows";
 import { runStep, stepArgs } from "../lib/steps";
 
@@ -48,7 +49,12 @@ export const run = internalAction({
       if (!toolUse?.input) throw new Error(`Model returned no ${TOOL_NAME} call (stopReason: ${response.stopReason})`);
       if (response.stopReason === "max_tokens") throw new Error("Model ran out of output tokens mid-extraction");
       const extraction = extractionSchema.parse(trimToCaps(toolUse.input)); // throws → retry → needs_editor
-      const { dropped, ...result } = applyEvidence(extraction, buildTranscriptIndex(input.segments), profile);
+      const { dropped, ...checked } = applyEvidence(extraction, buildTranscriptIndex(input.segments), profile);
+      // Decision 007: Jev's topics replace Haiku's (93% vs 67% accepted on the labeled set).
+      // ponytail: Haiku still returns topics that are discarded here; drop them from its schema if token cost matters
+      const typesafeKey = process.env.TYPESAFE_API_KEY;
+      if (!typesafeKey) throw new Error("Missing Convex env var TYPESAFE_API_KEY");
+      const result = { ...checked, topics: await jevTopicsFor(input, typesafeKey) };
       for (const item of dropped) console.log(`[backstory] ${args.storyId} dropped ${item.kind} "${item.name}": ${item.reason}`);
       await ctx.runMutation(internal.extractions.save, { ...args, runId: `${args.storyId}:${Date.now()}`, result });
     });

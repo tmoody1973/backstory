@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { buildTranscriptIndex, findEvidence } from "../../convex/lib/evidence";
 import {
-  evidenceQuestions, passageCandidates, pickEvidence, pickTopics, topicQuestions, transcriptState,
+  evidenceQuestions, jevTopicsFor, passageCandidates, pickEvidence, pickTopics, topicQuestions, transcriptState,
 } from "../../convex/lib/jevTopics";
 import { TOPIC_VALUES } from "../../convex/lib/taxonomy";
 import { TEST_SEGMENTS } from "../fixtures/segments";
@@ -89,5 +89,34 @@ describe("evidence selection", () => {
 describe("transcriptState", () => {
   it("is the transcript as plain speaker-labelled lines", () => {
     expect(transcriptState(TEST_SEGMENTS.slice(0, 1))).toBe("spk_0: Welcome back to This Bites.");
+  });
+});
+
+describe("jevTopicsFor", () => {
+  const reply = (answers: object) =>
+    ({ ok: true, status: 200, json: async () => ({ model: "jev-1.13.0", answers, usage: { input_tokens: 10, output_tokens: 1 } }) }) as Response;
+
+  it("asks for topics, then for each topic's passage, and returns verbatim quotes ready to save", async () => {
+    const candidates = passageCandidates(TEST_SEGMENTS);
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(reply({ "food-drink": { type: "noul", noul: 0.96 }, arts: { type: "noul", noul: 0.1 } }))
+      .mockResolvedValueOnce(reply({ "food-drink": { type: "choice", choice: candidates[5].id, confidence: 0.8 } }));
+    const topics = await jevTopicsFor({ title: "Test", segments: TEST_SEGMENTS }, "key", fetchImpl);
+    expect(topics).toEqual([
+      { topic: "food-drink", confidence: 0.96, quote: TEST_SEGMENTS[5].text, startMs: 26000, speaker: "spk_1" },
+    ]);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls[0][1].headers).toMatchObject({ Authorization: "Bearer key" });
+  });
+
+  it("skips the passage call when no topic clears the threshold", async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(reply({ arts: { type: "noul", noul: 0.2 } }));
+    expect(await jevTopicsFor({ title: "Test", segments: TEST_SEGMENTS }, "key", fetchImpl)).toEqual([]);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails loudly when TypeSafe returns an error, so the pipeline retries", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 529, text: async () => "overloaded" } as Response);
+    await expect(jevTopicsFor({ title: "Test", segments: TEST_SEGMENTS }, "key", fetchImpl)).rejects.toThrow("TypeSafe request failed: HTTP 529");
   });
 });

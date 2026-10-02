@@ -129,3 +129,39 @@ export function pickEvidence(
     return passage ? [{ topic, confidence, quote: passage.text, startMs: passage.startMs, speaker: passage.speaker }] : [];
   });
 }
+
+export interface JevResponse {
+  model: string;
+  answers: Record<string, JevAnswer>;
+  usage: { input_tokens: number; output_tokens: number };
+}
+
+/** One TypeSafe evaluation. Errors throw, so a pipeline step fails and goes through its normal retries. */
+export async function askJev(
+  state: string,
+  questions: Record<string, unknown>,
+  apiKey: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<JevResponse> {
+  const response = await fetchImpl(JEV_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ state, model: JEV_MODEL, questions }),
+  });
+  if (!response.ok) throw new Error(`TypeSafe request failed: HTTP ${response.status} ${(await response.text()).slice(0, 300)}`);
+  return (await response.json()) as JevResponse;
+}
+
+/** Decision 007: Jev picks up to three topics, then the transcript passage that supports each one. */
+export async function jevTopicsFor(
+  input: { title: string; segments: Segment[] },
+  apiKey: string,
+  fetchImpl: typeof fetch = fetch,
+) {
+  const topicRun = await askJev(transcriptState(input.segments), topicQuestions(), apiKey, fetchImpl);
+  const topics = pickTopics(topicRun.answers);
+  if (topics.length === 0) return [];
+  const candidates = passageCandidates(input.segments);
+  const evidenceRun = await askJev(`Podcast episode: "${input.title}"`, evidenceQuestions(topics, candidates), apiKey, fetchImpl);
+  return pickEvidence(topics, evidenceRun.answers, candidates);
+}
