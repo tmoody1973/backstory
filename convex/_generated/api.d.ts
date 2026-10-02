@@ -31,6 +31,7 @@ import type * as lib_steps from "../lib/steps.js";
 import type * as lib_taxonomy from "../lib/taxonomy.js";
 import type * as lib_transcribeOutput from "../lib/transcribeOutput.js";
 import type * as public_ from "../public.js";
+import type * as sonnetExtract from "../sonnetExtract.js";
 import type * as stories from "../stories.js";
 import type * as transcripts from "../transcripts.js";
 
@@ -64,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   "lib/taxonomy": typeof lib_taxonomy;
   "lib/transcribeOutput": typeof lib_transcribeOutput;
   public: typeof public_;
+  sonnetExtract: typeof sonnetExtract;
   stories: typeof stories;
   transcripts: typeof transcripts;
 }>;

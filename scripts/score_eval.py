@@ -88,6 +88,7 @@ def main() -> None:
     haiku = by_episode(json.load(open(f"{EVAL}/haiku-output.json"))["episodes"])
     jev = by_episode(json.load(open(f"{EVAL}/jev-topics.json"))["episodes"])
     judged = by_episode(json.load(open(f"{EVAL}/haiku-jev-judge-output.json"))["episodes"])
+    sonnet = by_episode(json.load(open(f"{EVAL}/sonnet-output.json"))["episodes"])
     all_eps = set(key) | set(haiku)
     for title, eps in [("ALL 20 EPISODES", all_eps), ("BLIND 5 (control)", all_eps & BLIND),
                        ("SUGGESTION 15", all_eps - BLIND)]:
@@ -95,6 +96,7 @@ def main() -> None:
         table("Haiku", score(haiku, key, eps), TYPES)
         table("Jev", score(jev, key, eps), ["topic"])
         table("H+judge", score(judged, key, eps), ["person"])
+        table("Sonnet", score(sonnet, key, eps), TYPES)
 
 
 if __name__ == "__main__":
