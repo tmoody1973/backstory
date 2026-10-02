@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { api, internal } from "../convex/_generated/api";
-import { firstSentence, storySearchText } from "../convex/lib/storySearch";
+import { firstSentence, relevantEnough, storySearchText } from "../convex/lib/storySearch";
 import { makeTest, saveRun, seedStory, type TestConvex } from "./helpers";
 
 const REVIEWER = { email: "tarik@radiomilwaukee.org", emailVerified: true, subject: "u", issuer: "https://clerk.test" };
@@ -34,7 +34,26 @@ describe("storySearchText / firstSentence", () => {
   });
 });
 
+describe("relevantEnough", () => {
+  const text = "freshwater food wine festival cafe corazon bay view shop";
+  it("needs at least half of the listener's meaningful words", () => {
+    expect(relevantEnough("art resale shop west allis", text)).toBe(false); // only "shop"
+    expect(relevantEnough("the festival at cafe corazon", text)).toBe(true);
+  });
+  it("ignores filler words and plural endings", () => {
+    expect(relevantEnough("that Milwaukee story about the festivals", text)).toBe(true);
+    expect(relevantEnough("the story about Milwaukee", text)).toBe(false); // nothing meaningful left
+  });
+});
+
 describe("public.searchStoryCards", () => {
+  it("does not return a story that shares only one word with the listener's memory", async () => {
+    const t = makeTest();
+    await published(t);
+    expect(await t.query(api.public.searchStoryCards, { text: "art resale cafe west allis" })).toEqual([]);
+    expect(await t.query(api.public.searchStoryCards, { text: "festival cafe" })).toHaveLength(1);
+  });
+
   it("finds a published story by words in its summary", async () => {
     const t = makeTest();
     const storyId = await published(t);
