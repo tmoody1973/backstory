@@ -63,7 +63,7 @@ def table(name: str, totals: dict, types: list[str]) -> None:
     for label_type in types:
         t = totals[label_type]
         if t["pred"] or t["key"]:
-            print(f"  {name:6} {label_type:12} precision {pct(t['tp_pred'], t['pred'])} ({t['tp_pred']}/{t['pred']})"
+            print(f"  {name:7} {label_type:12} precision {pct(t['tp_pred'], t['pred'])} ({t['tp_pred']}/{t['pred']})"
                   f"   recall {pct(t['tp_key'], t['key'])} ({t['tp_key']}/{t['key']})")
 
 
@@ -87,12 +87,14 @@ def main() -> None:
         key[label["episode"]].append(label)
     haiku = by_episode(json.load(open(f"{EVAL}/haiku-output.json"))["episodes"])
     jev = by_episode(json.load(open(f"{EVAL}/jev-topics.json"))["episodes"])
+    judged = by_episode(json.load(open(f"{EVAL}/haiku-jev-judge-output.json"))["episodes"])
     all_eps = set(key) | set(haiku)
     for title, eps in [("ALL 20 EPISODES", all_eps), ("BLIND 5 (control)", all_eps & BLIND),
                        ("SUGGESTION 15", all_eps - BLIND)]:
         print(f"\n{title}")
         table("Haiku", score(haiku, key, eps), TYPES)
         table("Jev", score(jev, key, eps), ["topic"])
+        table("H+judge", score(judged, key, eps), ["person"])
 
 
 if __name__ == "__main__":
