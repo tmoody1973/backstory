@@ -26,7 +26,8 @@ export const extractionSchema = z.object({
         entityType: z.enum(ENTITY_TYPES),
         name: z.string().min(1),
         quote: z.string(),
-        placeCategory: z.enum(PLACE_CATEGORIES).nullable(),
+        // An invented category ("farm", "market") drops that one place later, not the whole episode.
+        placeCategory: z.enum(PLACE_CATEGORIES).nullable().catch(null),
         relatedPlace: z.string().nullable(),
       }),
     )

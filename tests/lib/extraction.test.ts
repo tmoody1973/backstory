@@ -112,6 +112,13 @@ describe("trimToCaps", () => {
 });
 
 describe("extractionSchema", () => {
+  it("drops one place with an unknown category instead of failing the whole episode", () => {
+    const odd = { ...raw, mentions: [{ ...raw.mentions[0], placeCategory: "farm" }, raw.mentions[1]] };
+    const parsed = extractionSchema.parse(odd);
+    expect(parsed.mentions[0].placeCategory).toBeNull();
+    expect(applyEvidence(parsed, index, profile).dropped).toContainEqual({ kind: "mention", name: "Café Corazón", reason: "place without a category" });
+  });
+
   it("accepts a long two-sentence summary instead of failing the episode", () => {
     expect(extractionSchema.safeParse({ ...raw, summary: "x".repeat(900) }).success).toBe(true);
   });
