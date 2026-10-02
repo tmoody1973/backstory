@@ -181,3 +181,37 @@ describe("reviewMutations.savePin (Add location)", () => {
     expect(await codeOf(t.mutation(internal.reviewMutations.savePin, { mentionId: joe._id, ...PIN }))).toBe("stale_run");
   });
 });
+
+describe("reviewMutations.renameMention (fix a spelling)", () => {
+  it("corrects a person's name, and listeners can find the story by the right spelling", async () => {
+    const t = makeTest();
+    const storyId = await ready(t);
+    const [joe] = (await rows(t, "mentions")).filter((m) => m.name === "Joe Sasto");
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.renameMention, { mentionId: joe._id, name: " Joe Sastoh " });
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.approveEpisode, { storyId, runId: "run-1", summary: SUMMARY });
+    expect((await t.query(api.public.getStory, { storyId }))?.mentions.map((m) => m.name)).toContain("Joe Sastoh");
+    expect((await t.query(api.public.searchStories, { text: "Sastoh" })).map((r) => r.storyId)).toEqual([storyId]);
+  });
+
+  it("renaming a place changes the name listeners hear, over the map's spelling", async () => {
+    const t = makeTest();
+    const storyId = await ready(t);
+    const [cafe] = (await rows(t, "mentions")).filter((m) => m.name === "Café Corazón");
+    await t.run(async (ctx) => {
+      const place = (await ctx.db.query("places").take(1))[0];
+      await ctx.db.patch("places", place._id, { officialName: "Cafe Corazon LLC", geocodeConfidence: 0.9, reviewStatus: "approved" });
+    });
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.renameMention, { mentionId: cafe._id, name: "Café Corazón" });
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.approveEpisode, { storyId, runId: "run-1", summary: SUMMARY });
+    expect((await t.query(api.public.getStory, { storyId }))?.places[0].name).toBe("Café Corazón");
+  });
+
+  it("refuses a blank or over-long name, and non-reviewers", async () => {
+    const t = makeTest();
+    await ready(t);
+    const [joe] = (await rows(t, "mentions")).filter((m) => m.name === "Joe Sasto");
+    expect(await codeOf(t.withIdentity(REVIEWER).mutation(api.reviewMutations.renameMention, { mentionId: joe._id, name: "  " }))).toBe("invalid_name");
+    expect(await codeOf(t.withIdentity(REVIEWER).mutation(api.reviewMutations.renameMention, { mentionId: joe._id, name: "x".repeat(121) }))).toBe("invalid_name");
+    expect(await codeOf(t.mutation(api.reviewMutations.renameMention, { mentionId: joe._id, name: "Joe" }))).toBe("not_signed_in");
+  });
+});

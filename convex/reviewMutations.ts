@@ -2,12 +2,14 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, type MutationCtx } from "./_generated/server";
 import { approveRun } from "./lib/approveRun";
+import { normalizeForMatch } from "./lib/evidence";
 import { requireReviewer } from "./lib/reviewAuth";
 import { placeCategoryValidator, reviewStatusValidator } from "./schema";
 
 const MAX_SUMMARY = 1500; // same cap as the extraction schema
 const MAX_NAME = 80;
 const MAX_NEIGHBORHOOD = 60;
+const MAX_MENTION_NAME = 120;
 
 const itemValidator = v.union(
   v.object({ table: v.literal("mentions"), id: v.id("mentions") }),
@@ -120,5 +122,23 @@ export const savePin = internalMutation({
     const existing = await ctx.db.query("places").withIndex("by_mentionId", (q) => q.eq("mentionId", mentionId)).unique();
     if (existing) return ctx.db.patch("places", existing._id, pin);
     await ctx.db.insert("places", { storyId: mention!.storyId, runId: mention!.runId, mentionId, name: mention!.name, ...pin });
+  },
+});
+
+/** Fix a misheard spelling ("Luke Zaum" → "Luke Zahm"). The editor's spelling wins over the map's, and becomes searchable. */
+export const renameMention = mutation({
+  args: { mentionId: v.id("mentions"), name: v.string() },
+  handler: async (ctx, { mentionId, name }) => {
+    await requireReviewer(ctx);
+    const trimmed = name.trim();
+    if (!trimmed || trimmed.length > MAX_MENTION_NAME) throw new ConvexError({ code: "invalid_name" });
+    const mention = await ctx.db.get("mentions", mentionId);
+    await assertLiveRun(ctx, mention);
+    await ctx.db.patch("mentions", mentionId, {
+      name: trimmed,
+      searchText: normalizeForMatch(`${trimmed} ${mention!.relatedPlace ?? ""} ${mention!.quote}`),
+    });
+    const place = await ctx.db.query("places").withIndex("by_mentionId", (q) => q.eq("mentionId", mentionId)).unique();
+    if (place) await ctx.db.patch("places", place._id, { name: trimmed, officialName: trimmed });
   },
 });
