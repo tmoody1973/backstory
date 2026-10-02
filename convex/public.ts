@@ -4,7 +4,7 @@ import { query } from "./_generated/server";
 import { attribution } from "./lib/attribution";
 import { normalizeForMatch } from "./lib/evidence";
 import { getShowProfile } from "./lib/shows";
-import { firstSentence } from "./lib/storySearch";
+import { firstSentence, relevantEnough } from "./lib/storySearch";
 
 // The contract with the Alexa MCP server: only rows from the editor-approved run, and
 // nothing an editor rejected or marked not-for-assistant-use. These are public queries
@@ -120,9 +120,10 @@ export const searchStoryCards = query({
         const published = q.search("searchText", search).eq("reviewStatus", "approved").eq("doNotUse", false);
         return showSlug ? published.eq("showSlug", showSlug) : published;
       })
-      .take(5);
+      .take(10);
     return hits
-      .filter((story) => story.summary && story.approvedRunId)
+      .filter((story) => story.summary && story.approvedRunId && relevantEnough(text, story.searchText ?? ""))
+      .slice(0, 5)
       .map((story) => {
         const show = getShowProfile(story.showSlug).name;
         return {
