@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
 import { enqueue, markDone } from "./jobs";
 import { normalizeForMatch } from "./lib/evidence";
 import { actionKindValidator, entityTypeValidator, placeCategoryValidator, topicValidator } from "./schema";
@@ -55,7 +55,12 @@ export const save = internalMutation({
   },
   handler: async (ctx, { jobId, storyId, runId, result }) => {
     const placeMentions = new Map<string, Id<"mentions">>();
+    const keepOff = await keptOffAlexa(ctx, storyId);
     for (const mention of result.mentions) {
+      // An editor said "true, but keep off Alexa" on an earlier run: the new run starts with the same decision.
+      const decision = keepOff.has(normalizeForMatch(mention.name))
+        ? { reviewStatus: "rejected" as const, removeReason: "sensitive" as const }
+        : { reviewStatus: "pending" as const };
       const mentionId = await ctx.db.insert("mentions", {
         storyId,
         runId,
@@ -66,14 +71,14 @@ export const save = internalMutation({
         speaker: mention.speaker,
         relatedPlace: mention.relatedPlace ?? undefined,
         subjectConfidence: mention.subjectConfidence,
-        reviewStatus: "pending",
+        ...decision,
         doNotUse: false,
         searchText: normalizeForMatch(`${mention.name} ${mention.relatedPlace ?? ""} ${mention.quote}`),
       });
       if (mention.entityType === "place" && mention.placeCategory) {
         placeMentions.set(normalizeForMatch(mention.name), mentionId);
         await ctx.db.insert("places", {
-          storyId, runId, mentionId, name: mention.name, category: mention.placeCategory, reviewStatus: "pending",
+          storyId, runId, mentionId, name: mention.name, category: mention.placeCategory, ...decision,
         });
       }
     }
@@ -97,3 +102,19 @@ export const save = internalMutation({
     await enqueue(ctx, "geocode", storyId, internal.aws.geocode.run);
   },
 });
+
+// A run holds at most 40 mentions (extraction schema).
+const MAX_MENTIONS_PER_RUN = 200;
+
+/** Normalized names an editor removed as "true, but keep off Alexa" in the story's previous or published run. */
+async function keptOffAlexa(ctx: MutationCtx, storyId: Id<"stories">): Promise<Set<string>> {
+  const story = await ctx.db.get("stories", storyId);
+  const runs = [...new Set([story?.latestRunId, story?.approvedRunId].filter((run): run is string => Boolean(run)))];
+  const names = new Set<string>();
+  for (const runId of runs) {
+    const mentions = await ctx.db.query("mentions").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_MENTIONS_PER_RUN);
+    const places = await ctx.db.query("places").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_MENTIONS_PER_RUN);
+    for (const row of [...mentions, ...places]) if (row.removeReason === "sensitive") names.add(normalizeForMatch(row.name));
+  }
+  return names;
+}

@@ -157,6 +157,7 @@ describe("reviewMutations.savePin (Add location)", () => {
     const t = makeTest();
     const storyId = await ready(t);
     const [joe] = (await rows(t, "mentions")).filter((m) => m.name === "Joe Sasto");
+    await t.run((ctx) => ctx.db.patch("mentions", joe._id, { entityType: "organization" })); // stands in for an organization
     await t.mutation(internal.reviewMutations.savePin, { mentionId: joe._id, ...PIN });
     await t.withIdentity(REVIEWER).mutation(api.reviewMutations.approveEpisode, { storyId, runId: "run-1", summary: SUMMARY });
     const place = (await t.query(api.public.getStory, { storyId }))?.places.find((p) => p.name === "Joe Sasto");
@@ -233,5 +234,42 @@ describe("reviewMutations.decideItem with a reason", () => {
     const [action] = await rows(t, "storyActions");
     await t.withIdentity(REVIEWER).mutation(api.reviewMutations.decideItem, { item: { table: "storyActions", id: action._id }, status: "rejected" });
     expect((await rows(t, "storyActions"))[0].removeReason).toBe("wrong");
+  });
+});
+
+describe("privacy guards on pins and re-processing", () => {
+  const PIN = { lat: 43.0, lng: -88.02, label: "8004 W National Ave, West Allis, WI 53214", category: "venue" as const };
+
+  it("refuses to pin a person: a person's location is never published", async () => {
+    const t = makeTest();
+    await ready(t);
+    const [joe] = (await rows(t, "mentions")).filter((m) => m.name === "Joe Sasto");
+    expect(await codeOf(t.mutation(internal.reviewMutations.savePin, { mentionId: joe._id, ...PIN }))).toBe("not_locatable");
+    expect(await rows(t, "places")).toHaveLength(1); // only the sample restaurant
+  });
+
+  it("correcting the location of a removed place keeps it removed", async () => {
+    const t = makeTest();
+    await ready(t);
+    const [place] = await rows(t, "places");
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.decideItem, { item: { table: "places", id: place._id }, status: "rejected", reason: "sensitive" });
+    await t.mutation(internal.reviewMutations.savePin, { mentionId: place.mentionId, ...PIN, category: "restaurant" });
+    expect((await rows(t, "places"))[0]).toMatchObject({ reviewStatus: "rejected", removeReason: "sensitive", lat: 43.0 });
+  });
+
+  it("a 'keep off Alexa' removal carries over when the episode is re-processed", async () => {
+    const t = makeTest();
+    const storyId = await ready(t);
+    const [joe] = (await rows(t, "mentions")).filter((m) => m.name === "Joe Sasto");
+    const [place] = await rows(t, "places");
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.decideItem, { item: { table: "mentions", id: joe._id }, status: "rejected", reason: "sensitive" });
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.decideItem, { item: { table: "places", id: place._id }, status: "rejected", reason: "sensitive" });
+    await saveRun(t, storyId, "run-2");
+    const newJoe = (await rows(t, "mentions")).find((m) => m.runId === "run-2" && m.name === "Joe Sasto");
+    const newPlace = (await rows(t, "places")).find((p) => p.runId === "run-2");
+    expect(newJoe).toMatchObject({ reviewStatus: "rejected", removeReason: "sensitive" });
+    expect(newPlace).toMatchObject({ reviewStatus: "rejected", removeReason: "sensitive" });
+    // a removal for being wrong is not carried: the new run may have fixed it
+    expect((await rows(t, "storyTopics")).find((r) => r.runId === "run-2")?.reviewStatus).toBe("pending");
   });
 });

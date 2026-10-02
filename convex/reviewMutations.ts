@@ -10,6 +10,7 @@ const MAX_SUMMARY = 1500; // same cap as the extraction schema
 const MAX_NAME = 80;
 const MAX_NEIGHBORHOOD = 60;
 const MAX_MENTION_NAME = 120;
+const LOCATABLE = new Set(["place", "organization", "event"]);
 
 const itemValidator = v.union(
   v.object({ table: v.literal("mentions"), id: v.id("mentions") }),
@@ -119,10 +120,13 @@ export const savePin = internalMutation({
   handler: async (ctx, { mentionId, lat, lng, label, category }) => {
     const mention = await ctx.db.get("mentions", mentionId);
     await assertLiveRun(ctx, mention);
-    const pin = { lat, lng, geocodeLabel: label, geocodeConfidence: 1, category, reviewStatus: "approved" as const };
+    // A person's or a dish's location is never published; only places people can visit get pins.
+    if (!LOCATABLE.has(mention!.entityType)) throw new ConvexError({ code: "not_locatable" });
+    const pin = { lat, lng, geocodeLabel: label, geocodeConfidence: 1, category };
     const existing = await ctx.db.query("places").withIndex("by_mentionId", (q) => q.eq("mentionId", mentionId)).unique();
-    if (existing) return ctx.db.patch("places", existing._id, pin);
-    await ctx.db.insert("places", { storyId: mention!.storyId, runId: mention!.runId, mentionId, name: mention!.name, ...pin });
+    // Fixing the pin of a removed place keeps it removed; it must never put the place back on Alexa.
+    if (existing) return ctx.db.patch("places", existing._id, existing.reviewStatus === "rejected" ? pin : { ...pin, reviewStatus: "approved" });
+    await ctx.db.insert("places", { storyId: mention!.storyId, runId: mention!.runId, mentionId, name: mention!.name, ...pin, reviewStatus: "approved" });
   },
 });
 
