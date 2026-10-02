@@ -49,6 +49,7 @@ export const getStory = query({
       attribution: attribution(show, story.publishedAt),
       audioUrl: story.audioUrl,
       permalink: story.permalink ?? null,
+      imageUrl: story.imageUrl ?? null,
       mentions: mentions
         .filter((mention) => mention.entityType !== "place")
         .map(({ entityType, name, quote, startMs, relatedPlace }) => ({

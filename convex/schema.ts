@@ -42,6 +42,7 @@ export default defineSchema({
     audioUrl: v.string(),
     durationSec: v.number(),
     permalink: v.optional(v.string()),
+    imageUrl: v.optional(v.string()), // show artwork (CDS series image-square)
     stage: stageValidator,
     proposedSummary: v.optional(v.string()), // from the latest extraction run
     summary: v.optional(v.string()), // the approved summary listeners hear
