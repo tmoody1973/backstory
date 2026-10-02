@@ -14,6 +14,8 @@ export function parseReviewerList(raw: string | undefined): string[] {
 export function isReviewer(email: string | undefined, emailVerified: boolean | undefined, raw: string | undefined): boolean {
   if (!email || emailVerified !== true) return false;
   const normalized = email.trim().toLowerCase();
+  // A Clerk development instance verifies any "+clerk_test" address with a fixed code, no inbox needed.
+  if (normalized.includes("+clerk_test")) return false;
   const domain = normalized.slice(normalized.lastIndexOf("@"));
   return parseReviewerList(raw).some((entry) => (entry.startsWith("@") ? domain === entry : normalized === entry));
 }

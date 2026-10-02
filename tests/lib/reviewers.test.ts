@@ -29,6 +29,10 @@ describe("isReviewer", () => {
   it("anchors domain rules at the last @ so a quoted local part can't smuggle a mailbox", () => {
     expect(isReviewer('"x@example.org"@evil.com', true, LIST)).toBe(false);
   });
+  it("refuses Clerk test-mode addresses, which a development instance marks verified without a real inbox", () => {
+    expect(isReviewer("anyone+clerk_test@radiomilwaukee.org", true, "@radiomilwaukee.org")).toBe(false);
+    expect(isReviewer("tarik+clerk_test@radiomilwaukee.org", true, "tarik+clerk_test@radiomilwaukee.org")).toBe(false);
+  });
   it("refuses everyone when the list is empty (fail closed)", () => {
     expect(isReviewer("tarik@radiomilwaukee.org", true, "")).toBe(false);
   });

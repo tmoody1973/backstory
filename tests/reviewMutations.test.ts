@@ -23,9 +23,11 @@ async function codeOf(promise: Promise<unknown>) {
   }
 }
 
+/** Saving a run sets stage "extracted"; the geocode step then sets "geocoded". */
 async function ready(t: TestConvex) {
-  const storyId = await seedStory(t, { stage: "geocoded" });
+  const storyId = await seedStory(t);
   await saveRun(t, storyId, "run-1");
+  await t.run((ctx) => ctx.db.patch("stories", storyId, { stage: "geocoded" }));
   return storyId;
 }
 
@@ -59,6 +61,15 @@ describe("reviewMutations.approveEpisode", () => {
     await saveRun(t, storyId, "run-2");
     expect(await codeOf(t.withIdentity(REVIEWER).mutation(api.reviewMutations.approveEpisode, { storyId, runId: "run-1", summary: SUMMARY }))).toBe("stale_run");
     expect((await t.run((ctx) => ctx.db.get("stories", storyId)))?.reviewStatus).toBe("pending");
+  });
+
+  it("refuses a run whose map pins are still being found, and writes nothing", async () => {
+    const t = makeTest();
+    const storyId = await seedStory(t);
+    await saveRun(t, storyId, "run-1"); // stage "extracted": geocoding still queued
+    expect(await codeOf(t.withIdentity(REVIEWER).mutation(api.reviewMutations.approveEpisode, { storyId, runId: "run-1", summary: SUMMARY }))).toBe("not_ready");
+    expect((await t.run((ctx) => ctx.db.get("stories", storyId)))?.reviewStatus).toBe("pending");
+    expect((await rows(t, "storyTopics"))[0].reviewStatus).toBe("pending");
   });
 
   it("refuses a blank or over-long summary and writes nothing", async () => {

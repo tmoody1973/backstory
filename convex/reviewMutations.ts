@@ -53,6 +53,8 @@ export const approveEpisode = mutation({
     const story = await ctx.db.get("stories", storyId);
     if (!story) throw new ConvexError({ code: "not_found" });
     if (story.latestRunId !== runId) throw new ConvexError({ code: "stale_run" });
+    // Places get their map pins after extraction; approving before then would publish pins nobody saw.
+    if (story.stage === "extracted") throw new ConvexError({ code: "not_ready" });
     await approveRun(ctx, storyId, runId);
     await ctx.db.patch("stories", storyId, {
       summary: trimmed, approvedRunId: runId, reviewStatus: "approved", approvedBy: email, approvedAt: Date.now(),
