@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query, type QueryCtx } from "./_generated/server";
+import { attribution } from "./lib/attribution";
+import { mentionAttention, placeAttention } from "./lib/attention";
 import { requireReviewer } from "./lib/reviewAuth";
 import { getShowProfile } from "./lib/shows";
 
@@ -29,16 +31,20 @@ export const queue = query({
     const stories = [...(await byStatus("pending")), ...(await byStatus("approved"))]
       .filter((story) => !showSlug || story.showSlug === showSlug)
       .sort((a, b) => b.publishedAt - a.publishedAt);
-    return stories.flatMap((story) => {
+    const rows = [];
+    for (const story of stories) {
       const reason = needsReview(story);
-      if (!reason) return [];
+      if (!reason) continue;
       const profile = getShowProfile(story.showSlug);
-      return [{
+      // ponytail: reads each listed story's latest run (≤200 rows); keep counts on the story if the queue grows past ~50
+      const counts = story.latestRunId ? countItems(await itemsFor(ctx, story._id, story.latestRunId)) : { items: 0, needsYou: 0 };
+      rows.push({
         storyId: story._id, title: story.title, showSlug: story.showSlug, showName: profile.name, reviewer: profile.reviewer,
         contentType: story.contentType, publishedAt: story.publishedAt, stage: story.stage,
-        reviewStatus: story.reviewStatus, doNotUse: story.doNotUse, needsReview: reason,
-      }];
-    });
+        reviewStatus: story.reviewStatus, doNotUse: story.doNotUse, needsReview: reason, ...counts,
+      });
+    }
+    return rows;
   },
 });
 
@@ -57,6 +63,7 @@ export const episode = query({
         reviewStatus: story.reviewStatus, doNotUse: story.doNotUse, proposedSummary: story.proposedSummary ?? "",
         summary: story.summary ?? null, latestRunId: runId, approvedRunId: story.approvedRunId ?? null,
         approvedBy: story.approvedBy ?? null, approvedAt: story.approvedAt ?? null,
+        attribution: attribution(profile.name, story.publishedAt),
       },
       speakers: await speakersFor(ctx, storyId),
       ...(await itemsFor(ctx, storyId, runId)),
@@ -74,18 +81,24 @@ async function itemsFor(ctx: QueryCtx, storyId: Id<"stories">, runId: string) {
   return {
     mentions: mentions.filter((m) => m.entityType !== "place").map((m) => ({
       id: m._id, entityType: m.entityType, name: m.name, quote: m.quote, startMs: m.startMs,
-      subjectConfidence: m.subjectConfidence ?? null, reviewStatus: m.reviewStatus, doNotUse: m.doNotUse,
+      subjectConfidence: m.subjectConfidence ?? null, reviewStatus: m.reviewStatus, removeReason: m.removeReason ?? null,
+      doNotUse: m.doNotUse, attention: mentionAttention(m),
     })),
     places: places
       .map((p) => ({
         id: p._id, mentionId: p.mentionId, name: p.name, officialName: p.officialName ?? null, category: p.category,
         geocodeLabel: p.geocodeLabel ?? null, geocodeConfidence: p.geocodeConfidence ?? null, neighborhood: p.neighborhood ?? null,
         quote: mentionById.get(p.mentionId)?.quote ?? "", startMs: mentionById.get(p.mentionId)?.startMs ?? 0, reviewStatus: p.reviewStatus,
+        removeReason: p.removeReason ?? null, attention: placeAttention(p),
       }))
       .sort((a, b) => (a.geocodeConfidence ?? -1) - (b.geocodeConfidence ?? -1)), // no pin at all, then weakest pins, first
-    topics: topics.map((t) => ({ id: t._id, topic: t.topic, confidence: t.confidence, quote: t.quote, startMs: t.startMs, reviewStatus: t.reviewStatus })),
+    topics: topics.map((t) => ({
+      id: t._id, topic: t.topic, confidence: t.confidence, quote: t.quote, startMs: t.startMs, reviewStatus: t.reviewStatus,
+      removeReason: t.removeReason ?? null, attention: null,
+    })),
     actions: actions.map((a) => ({
       id: a._id, kind: a.kind, label: a.label, quote: a.quote, startMs: a.startMs, reviewStatus: a.reviewStatus,
+      removeReason: a.removeReason ?? null, attention: null,
       place: a.placeMentionId ? (mentionById.get(a.placeMentionId)?.name ?? null) : null,
     })),
   };
@@ -101,4 +114,12 @@ async function speakersFor(ctx: QueryCtx, storyId: Id<"stories">) {
     const named = names.find((row) => row.label === label);
     return { label, name: named?.name ?? null, source: named?.source ?? null, sample: first.text, startMs: first.startMs, endMs: first.endMs };
   });
+}
+
+type Items = Awaited<ReturnType<typeof itemsFor>>;
+
+/** Every reviewable item, and how many still need a reviewer (undecided and flagged). */
+function countItems({ mentions, places, topics, actions }: Items) {
+  const all = [...mentions, ...places, ...topics, ...actions];
+  return { items: all.length, needsYou: all.filter((item) => item.reviewStatus === "pending" && item.attention).length };
 }

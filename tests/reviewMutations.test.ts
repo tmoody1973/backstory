@@ -215,3 +215,23 @@ describe("reviewMutations.renameMention (fix a spelling)", () => {
     expect(await codeOf(t.mutation(api.reviewMutations.renameMention, { mentionId: joe._id, name: "Joe" }))).toBe("not_signed_in");
   });
 });
+
+describe("reviewMutations.decideItem with a reason", () => {
+  it("records why an item was removed, and clears the reason when it's kept again", async () => {
+    const t = makeTest();
+    await ready(t);
+    const [topic] = await rows(t, "storyTopics");
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.decideItem, { item: { table: "storyTopics", id: topic._id }, status: "rejected", reason: "sensitive" });
+    expect((await rows(t, "storyTopics"))[0]).toMatchObject({ reviewStatus: "rejected", removeReason: "sensitive" });
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.decideItem, { item: { table: "storyTopics", id: topic._id }, status: "approved" });
+    expect((await rows(t, "storyTopics"))[0].removeReason).toBeUndefined();
+  });
+
+  it("a removal without a reason is recorded as wrong", async () => {
+    const t = makeTest();
+    await ready(t);
+    const [action] = await rows(t, "storyActions");
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.decideItem, { item: { table: "storyActions", id: action._id }, status: "rejected" });
+    expect((await rows(t, "storyActions"))[0].removeReason).toBe("wrong");
+  });
+});

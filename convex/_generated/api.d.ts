@@ -22,6 +22,7 @@ import type * as jevPeople from "../jevPeople.js";
 import type * as jevTopics from "../jevTopics.js";
 import type * as jobs from "../jobs.js";
 import type * as lib_approveRun from "../lib/approveRun.js";
+import type * as lib_attention from "../lib/attention.js";
 import type * as lib_attribution from "../lib/attribution.js";
 import type * as lib_cds from "../lib/cds.js";
 import type * as lib_deepgram from "../lib/deepgram.js";
@@ -66,6 +67,7 @@ declare const fullApi: ApiFromModules<{
   jevTopics: typeof jevTopics;
   jobs: typeof jobs;
   "lib/approveRun": typeof lib_approveRun;
+  "lib/attention": typeof lib_attention;
   "lib/attribution": typeof lib_attribution;
   "lib/cds": typeof lib_cds;
   "lib/deepgram": typeof lib_deepgram;

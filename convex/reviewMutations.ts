@@ -4,7 +4,7 @@ import { internalMutation, mutation, type MutationCtx } from "./_generated/serve
 import { approveRun } from "./lib/approveRun";
 import { normalizeForMatch } from "./lib/evidence";
 import { requireReviewer } from "./lib/reviewAuth";
-import { placeCategoryValidator, reviewStatusValidator } from "./schema";
+import { placeCategoryValidator, removeReasonValidator, reviewStatusValidator } from "./schema";
 
 const MAX_SUMMARY = 1500; // same cap as the extraction schema
 const MAX_NAME = 80;
@@ -26,22 +26,23 @@ async function assertLiveRun(ctx: MutationCtx, row: { storyId: Id<"stories">; ru
 }
 
 export const decideItem = mutation({
-  args: { item: itemValidator, status: reviewStatusValidator },
-  handler: async (ctx, { item, status }) => {
+  args: { item: itemValidator, status: reviewStatusValidator, reason: v.optional(removeReasonValidator) },
+  handler: async (ctx, { item, status, reason }) => {
     await requireReviewer(ctx);
+    const decision = { reviewStatus: status, removeReason: status === "rejected" ? (reason ?? "wrong") : undefined };
     switch (item.table) {
       case "mentions":
         await assertLiveRun(ctx, await ctx.db.get("mentions", item.id));
-        return ctx.db.patch("mentions", item.id, { reviewStatus: status });
+        return ctx.db.patch("mentions", item.id, decision);
       case "places":
         await assertLiveRun(ctx, await ctx.db.get("places", item.id));
-        return ctx.db.patch("places", item.id, { reviewStatus: status });
+        return ctx.db.patch("places", item.id, decision);
       case "storyTopics":
         await assertLiveRun(ctx, await ctx.db.get("storyTopics", item.id));
-        return ctx.db.patch("storyTopics", item.id, { reviewStatus: status });
+        return ctx.db.patch("storyTopics", item.id, decision);
       case "storyActions":
         await assertLiveRun(ctx, await ctx.db.get("storyActions", item.id));
-        return ctx.db.patch("storyActions", item.id, { reviewStatus: status });
+        return ctx.db.patch("storyActions", item.id, decision);
     }
   },
 });

@@ -84,3 +84,21 @@ describe("review.episode", () => {
     expect(await t.withIdentity(REVIEWER).query(api.review.episode, { storyId })).toBeNull();
   });
 });
+
+describe("review triage", () => {
+  it("episode flags items that need a reviewer and carries the attribution Alexa will read", async () => {
+    const t = makeTest();
+    const storyId = await readyStory(t);
+    const episode = await t.withIdentity(REVIEWER).query(api.review.episode, { storyId });
+    expect(episode?.story.attribution).toMatch(/This Bites/);
+    expect(episode?.places[0].attention).toBe("no_pin"); // the sample place was never geocoded
+    expect(episode?.topics[0].attention).toBeNull();
+  });
+
+  it("queue rows say how many items there are and how many need a reviewer", async () => {
+    const t = makeTest();
+    await readyStory(t);
+    const [row] = await t.withIdentity(REVIEWER).query(api.review.queue, {});
+    expect(row).toMatchObject({ items: 4, needsYou: 1 }); // 1 person + 1 place + 1 topic + 1 action; the unpinned place needs you
+  });
+});
