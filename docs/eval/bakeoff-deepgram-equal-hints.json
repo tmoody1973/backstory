@@ -1,0 +1,105 @@
+{
+ "mode": "equal-hints",
+ "totals": {
+  "transcribe": 70,
+  "deepgram": 75,
+  "names": 94
+ },
+ "episodes": {
+  "E01": {
+   "names": 45,
+   "transcribe": 36,
+   "deepgram": 37,
+   "only_transcribe": [
+    "Caf\u00e9 Bustelo",
+    "Caf\u00e9 Colada",
+    "Caf\u00e9 Coraz\u00f3n",
+    "Freshwater Food & Wine Festival",
+    "Third Street Market Hall"
+   ],
+   "only_deepgram": [
+    "Bay View Neighborhood Association",
+    "Charlie Berens",
+    "Immy's African Cuisine",
+    "Luke Zahm",
+    "Lupi and Iris",
+    "Tony Scardino"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 48,
+   "duration_sec": 999.83673
+  },
+  "E02": {
+   "names": 13,
+   "transcribe": 10,
+   "deepgram": 11,
+   "only_transcribe": [
+    "Ted's Ice Cream & Restaurant"
+   ],
+   "only_deepgram": [
+    "Hong Anh Palace",
+    "Lupi and Iris"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 16,
+   "duration_sec": 1661.8318
+  },
+  "E04": {
+   "names": 17,
+   "transcribe": 15,
+   "deepgram": 15,
+   "only_transcribe": [
+    "SA SA"
+   ],
+   "only_deepgram": [
+    "3rd Street Market Hall"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 20,
+   "duration_sec": 1342.8245
+  },
+  "E07": {
+   "names": 14,
+   "transcribe": 6,
+   "deepgram": 8,
+   "only_transcribe": [
+    "Amaranth Bakery & Cafe"
+   ],
+   "only_deepgram": [
+    "Meghan Knall",
+    "Sabor Divino",
+    "Vientiane Noodle Shop"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 17,
+   "duration_sec": 1041.4758
+  },
+  "E11": {
+   "names": 5,
+   "transcribe": 3,
+   "deepgram": 4,
+   "only_transcribe": [],
+   "only_deepgram": [
+    "Ruben Gaona"
+   ],
+   "speakers": {
+    "transcribe": 6,
+    "deepgram": 7
+   },
+   "keyterms": 8,
+   "duration_sec": 264.0718
+  }
+ }
+}
