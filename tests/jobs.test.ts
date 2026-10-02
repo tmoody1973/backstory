@@ -13,7 +13,7 @@ async function seedJob(t: TestConvex, attempts = 0, status: "queued" | "running"
 
 describe("retryDelayMs", () => {
   it("waits 1, 4, then 16 minutes", () => {
-    expect([1, 2, 3].map(retryDelayMs)).toEqual([1, 240_000, 960_000]); // deliberately broken to prove CI goes red
+    expect([1, 2, 3].map(retryDelayMs)).toEqual([60_000, 240_000, 960_000]);
   });
 });
 
