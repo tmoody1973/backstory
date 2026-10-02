@@ -37,6 +37,18 @@ describe("parseUtterances", () => {
     ]);
   });
 
+  it("starts a new segment where the speaker changes mid-utterance (Deepgram splits utterances only on pauses)", () => {
+    const w = (word: string, speaker: number, start: number, end: number) => ({ punctuated_word: word, speaker, start, end });
+    const response = { results: { utterances: [{
+      speaker: 1, start: 6.4, end: 13.0, transcript: "…",
+      words: [w("Julianna", 1, 6.4, 6.9), w("started", 1, 7.0, 7.4), w("here.", 1, 7.5, 11.6), w("Well,", 2, 11.7, 11.9), w("what", 2, 12.0, 13.0)],
+    }] } };
+    expect(parseUtterances(response)).toEqual([
+      { speaker: "spk_1", startMs: 6400, endMs: 11600, text: "Julianna started here." },
+      { speaker: "spk_2", startMs: 11700, endMs: 13000, text: "Well, what" },
+    ]);
+  });
+
   it("explains what's wrong when utterances are missing", () => {
     expect(() => parseUtterances({ results: {} })).toThrow("Deepgram response has no utterances; was utterances=true set?");
   });

@@ -63,6 +63,14 @@
   {
    "heard": "Chantel Jewell",
    "correct": "Chantelle Jewell"
+  },
+  {
+   "heard": "four zero one four",
+   "correct": "414"
+  },
+  {
+   "heard": "four one four",
+   "correct": "414"
   }
  ]
 }
