@@ -170,3 +170,14 @@ describe("admin.reextract", () => {
     await expect(t.mutation(internal.admin.reextract, { storyId })).rejects.toThrow("has no transcript yet");
   });
 });
+
+describe("admin.retranscribe", () => {
+  it("queues a fresh transcription job for an existing story", async () => {
+    const t = makeTest();
+    const storyId = await seedStory(t, { stage: "geocoded" });
+    await t.mutation(internal.admin.retranscribe, { storyId });
+    const jobs = await t.run((ctx) => ctx.db.query("jobs").collect());
+    expect(jobs).toMatchObject([{ kind: "transcribe", status: "queued" }]);
+    expect(jobs[0].externalId).toBeUndefined();
+  });
+});

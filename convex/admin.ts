@@ -53,3 +53,17 @@ export const reextract = internalMutation({
     await enqueue(ctx, "extract", storyId, internal.aws.extract.run);
   },
 });
+
+/**
+ * Transcribe a story again from its audio, e.g. after the custom vocabulary changes (bills Transcribe again):
+ *   npx convex run admin:retranscribe '{"storyId":"..."}'
+ * The new job has no Transcribe job name yet, so it starts a fresh job instead of resuming the old one.
+ * Extraction and geocoding follow automatically; approved runs stay live until an editor approves the new one.
+ */
+export const retranscribe = internalMutation({
+  args: { storyId: v.id("stories") },
+  handler: async (ctx, { storyId }) => {
+    if (!(await ctx.db.get("stories", storyId))) throw new Error(`Story ${storyId} not found`);
+    await enqueue(ctx, "transcribe", storyId, internal.aws.transcribe.start);
+  },
+});

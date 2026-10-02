@@ -1,0 +1,14 @@
+# Names Transcribe should spell correctly, one per line. Rebuild with: python3 scripts/build_vocabulary.py
+# "Misheard => Correct" teaches Transcribe to write what it hears as the right spelling (corrections from Tarik, 2026-10-01).
+Cocina Filipina
+Tariq Moody => Tarik Moody
+Anne Christensen => Ann Christenson
+Ann Christensen => Ann Christenson
+Adam Pollock => Adam Pawlak
+Charlie Barron => Charlie Berens
+Arthur Ursink => Arthur Ircink
+Kyle Noll => Kyle Knall
+Kyle Knoll => Kyle Knall
+Tariq => Tarik
+Charlie Barron's => Charlie Berens's
+Barron => Berens
