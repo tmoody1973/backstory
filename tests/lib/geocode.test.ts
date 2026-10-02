@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { geocodeDecision, isLowConfidence, LOW_CONFIDENCE, pickBest, scoreCandidate, type GeoCandidate } from "../../convex/lib/geocode";
+import { addressMatch, geocodeDecision, isLowConfidence, LOW_CONFIDENCE, pickBest, scoreCandidate, type GeoCandidate } from "../../convex/lib/geocode";
 
 const near = (title: string, distanceM = 3000, position: [number, number] = [-87.9, 43.03]): GeoCandidate => ({
   title, position, distanceM, placeType: "PointOfInterest",
@@ -97,5 +97,18 @@ describe("geocodeDecision", () => {
   it("never pins a street address, only businesses and venues", () => {
     const home: GeoCandidate = { title: "2900 N Booth St", position: [-87.9, 43.07], distanceM: 5000, placeType: "PointAddress" };
     expect(geocodeDecision("2900 N Booth St", [home])).toEqual({ confidence: 0 });
+  });
+});
+
+describe("addressMatch (an editor typed an address)", () => {
+  const at = (title: string, distanceM: number, label = title): GeoCandidate => ({ title, position: [-88.02, 43.0], distanceM, label, placeType: "PointAddress" });
+
+  it("takes the map service's top match when it's in the Milwaukee area", () => {
+    expect(addressMatch([at("8004 W National Ave", 12_000, "8004 W National Ave, West Allis, WI 53214"), at("8004 National Ave", 900_000)]))
+      .toEqual({ lat: 43.0, lng: -88.02, label: "8004 W National Ave, West Allis, WI 53214" });
+  });
+  it("refuses a match outside the Milwaukee area, or no match at all", () => {
+    expect(addressMatch([at("8004 W National Ave", 900_000)])).toBeNull();
+    expect(addressMatch([])).toBeNull();
   });
 });

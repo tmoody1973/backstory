@@ -1,12 +1,12 @@
 import { ConvexError } from "convex/values";
-import type { MutationCtx, QueryCtx } from "../_generated/server";
+import type { Auth } from "convex/server";
 import { isReviewer } from "./reviewers";
 
 /**
  * The security boundary for review. The MCP server trusts reviewStatus "approved",
  * so every review function calls this before reading or writing anything.
  */
-export async function requireReviewer(ctx: QueryCtx | MutationCtx): Promise<string> {
+export async function requireReviewer(ctx: { auth: Auth }): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new ConvexError({ code: "not_signed_in" });
   if (!isReviewer(identity.email, identity.emailVerified, process.env.BACKSTORY_REVIEWER_EMAILS)) {

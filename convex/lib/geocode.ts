@@ -91,3 +91,10 @@ export function geocodeDecision(placeName: string, candidates: GeoCandidate[]): 
   const [lng, lat] = best.candidate.position;
   return { lat, lng, label: best.candidate.label, officialName: best.candidate.title, confidence: best.confidence };
 }
+
+/** An editor typed an address: trust the map service's top match, as long as it's in the Milwaukee area. */
+export function addressMatch(candidates: GeoCandidate[]): { lat: number; lng: number; label: string } | null {
+  const top = candidates[0];
+  if (!top || top.distanceM === undefined || top.distanceM > MAX_DISTANCE_M) return null;
+  return { lat: top.position[1], lng: top.position[0], label: top.label ?? top.title };
+}

@@ -1,6 +1,6 @@
 import { ConvexError } from "convex/values";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { api } from "../convex/_generated/api";
+import { api, internal } from "../convex/_generated/api";
 import type { Doc } from "../convex/_generated/dataModel";
 import { makeTest, saveRun, seedStory, type TestConvex } from "./helpers";
 
@@ -147,5 +147,37 @@ describe("reviewMutations.setPlaceNeighborhood and setDoNotUse", () => {
     await t.withIdentity(REVIEWER).mutation(api.reviewMutations.setDoNotUse, { target: { table: "stories", id: storyId }, doNotUse: true });
     await t.withIdentity(REVIEWER).mutation(api.reviewMutations.approveEpisode, { storyId, runId: "run-1", summary: SUMMARY });
     expect(await t.query(api.public.getStory, { storyId })).toBeNull();
+  });
+});
+
+describe("reviewMutations.savePin (Add location)", () => {
+  const PIN = { lat: 43.0, lng: -88.02, label: "8004 W National Ave, West Allis, WI 53214", category: "venue" as const };
+
+  it("turns an organization into a pinned, approved place that getStory returns", async () => {
+    const t = makeTest();
+    const storyId = await ready(t);
+    const [joe] = (await rows(t, "mentions")).filter((m) => m.name === "Joe Sasto");
+    await t.mutation(internal.reviewMutations.savePin, { mentionId: joe._id, ...PIN });
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.approveEpisode, { storyId, runId: "run-1", summary: SUMMARY });
+    const place = (await t.query(api.public.getStory, { storyId }))?.places.find((p) => p.name === "Joe Sasto");
+    expect(place).toMatchObject({ lat: 43.0, lng: -88.02, category: "venue" });
+  });
+
+  it("corrects an existing place's pin instead of adding a second place", async () => {
+    const t = makeTest();
+    await ready(t);
+    const [cafe] = (await rows(t, "mentions")).filter((m) => m.name === "Café Corazón");
+    await t.mutation(internal.reviewMutations.savePin, { mentionId: cafe._id, ...PIN, category: "restaurant" });
+    const places = await rows(t, "places");
+    expect(places).toHaveLength(1);
+    expect(places[0]).toMatchObject({ lat: 43.0, geocodeLabel: PIN.label, geocodeConfidence: 1, reviewStatus: "approved" });
+  });
+
+  it("refuses a mention from a superseded run", async () => {
+    const t = makeTest();
+    const storyId = await ready(t);
+    const [joe] = (await rows(t, "mentions")).filter((m) => m.name === "Joe Sasto");
+    await saveRun(t, storyId, "run-2");
+    expect(await codeOf(t.mutation(internal.reviewMutations.savePin, { mentionId: joe._id, ...PIN }))).toBe("stale_run");
   });
 });

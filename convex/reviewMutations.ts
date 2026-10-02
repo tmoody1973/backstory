@@ -1,9 +1,9 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { mutation, type MutationCtx } from "./_generated/server";
+import { internalMutation, mutation, type MutationCtx } from "./_generated/server";
 import { approveRun } from "./lib/approveRun";
 import { requireReviewer } from "./lib/reviewAuth";
-import { reviewStatusValidator } from "./schema";
+import { placeCategoryValidator, reviewStatusValidator } from "./schema";
 
 const MAX_SUMMARY = 1500; // same cap as the extraction schema
 const MAX_NAME = 80;
@@ -104,5 +104,21 @@ export const setDoNotUse = mutation({
     }
     await assertLiveRun(ctx, await ctx.db.get("mentions", target.id));
     return ctx.db.patch("mentions", target.id, { doNotUse });
+  },
+});
+
+/**
+ * Saves the pin an editor got by typing an address (aws/pinLocation.run checks the reviewer, then calls this).
+ * A person chose it, so it is approved at full confidence. Corrects an existing place, or makes a mention a place.
+ */
+export const savePin = internalMutation({
+  args: { mentionId: v.id("mentions"), lat: v.number(), lng: v.number(), label: v.string(), category: placeCategoryValidator },
+  handler: async (ctx, { mentionId, lat, lng, label, category }) => {
+    const mention = await ctx.db.get("mentions", mentionId);
+    await assertLiveRun(ctx, mention);
+    const pin = { lat, lng, geocodeLabel: label, geocodeConfidence: 1, category, reviewStatus: "approved" as const };
+    const existing = await ctx.db.query("places").withIndex("by_mentionId", (q) => q.eq("mentionId", mentionId)).unique();
+    if (existing) return ctx.db.patch("places", existing._id, pin);
+    await ctx.db.insert("places", { storyId: mention!.storyId, runId: mention!.runId, mentionId, name: mention!.name, ...pin });
   },
 });

@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as aws_extract from "../aws/extract.js";
 import type * as aws_geocode from "../aws/geocode.js";
+import type * as aws_pinLocation from "../aws/pinLocation.js";
 import type * as aws_transcribe from "../aws/transcribe.js";
 import type * as crons from "../crons.js";
 import type * as deepgram from "../deepgram.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   "aws/extract": typeof aws_extract;
   "aws/geocode": typeof aws_geocode;
+  "aws/pinLocation": typeof aws_pinLocation;
   "aws/transcribe": typeof aws_transcribe;
   crons: typeof crons;
   deepgram: typeof deepgram;
