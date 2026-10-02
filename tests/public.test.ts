@@ -181,3 +181,13 @@ describe("admin.retranscribe", () => {
     expect(jobs[0].externalId).toBeUndefined();
   });
 });
+
+describe("getStory image", () => {
+  it("returns the story's image, or null", async () => {
+    const t = makeTest();
+    const storyId = await seedStory(t, { imageUrl: "https://f.prxu.org/tb.jpg" });
+    await saveRun(t, storyId, "run-1");
+    await t.mutation(internal.admin.approveLatestRunForDemo, { storyId });
+    expect((await t.query(api.public.getStory, { storyId }))?.imageUrl).toBe("https://f.prxu.org/tb.jpg");
+  });
+});

@@ -4,6 +4,7 @@ import { internalMutation, mutation, type MutationCtx } from "./_generated/serve
 import { approveRun } from "./lib/approveRun";
 import { normalizeForMatch } from "./lib/evidence";
 import { requireReviewer } from "./lib/reviewAuth";
+import { refreshStorySearch } from "./lib/storySearch";
 import { placeCategoryValidator, removeReasonValidator, reviewStatusValidator } from "./schema";
 
 const MAX_SUMMARY = 1500; // same cap as the extraction schema
@@ -31,20 +32,30 @@ export const decideItem = mutation({
   handler: async (ctx, { item, status, reason }) => {
     await requireReviewer(ctx);
     const decision = { reviewStatus: status, removeReason: status === "rejected" ? (reason ?? "wrong") : undefined };
+    let row: { storyId: Id<"stories">; runId: string } | null;
     switch (item.table) {
       case "mentions":
-        await assertLiveRun(ctx, await ctx.db.get("mentions", item.id));
-        return ctx.db.patch("mentions", item.id, decision);
+        row = await ctx.db.get("mentions", item.id);
+        await assertLiveRun(ctx, row);
+        await ctx.db.patch("mentions", item.id, decision);
+        break;
       case "places":
-        await assertLiveRun(ctx, await ctx.db.get("places", item.id));
-        return ctx.db.patch("places", item.id, decision);
+        row = await ctx.db.get("places", item.id);
+        await assertLiveRun(ctx, row);
+        await ctx.db.patch("places", item.id, decision);
+        break;
       case "storyTopics":
-        await assertLiveRun(ctx, await ctx.db.get("storyTopics", item.id));
-        return ctx.db.patch("storyTopics", item.id, decision);
+        row = await ctx.db.get("storyTopics", item.id);
+        await assertLiveRun(ctx, row);
+        await ctx.db.patch("storyTopics", item.id, decision);
+        break;
       case "storyActions":
-        await assertLiveRun(ctx, await ctx.db.get("storyActions", item.id));
-        return ctx.db.patch("storyActions", item.id, decision);
+        row = await ctx.db.get("storyActions", item.id);
+        await assertLiveRun(ctx, row);
+        await ctx.db.patch("storyActions", item.id, decision);
+        break;
     }
+    await refreshStorySearch(ctx, row!.storyId);
   },
 });
 
@@ -63,6 +74,7 @@ export const approveEpisode = mutation({
     await ctx.db.patch("stories", storyId, {
       summary: trimmed, approvedRunId: runId, reviewStatus: "approved", approvedBy: email, approvedAt: Date.now(),
     });
+    await refreshStorySearch(ctx, storyId);
     return { approvedRunId: runId };
   },
 });
@@ -106,8 +118,10 @@ export const setDoNotUse = mutation({
       if (!(await ctx.db.get("stories", target.id))) throw new ConvexError({ code: "not_found" });
       return ctx.db.patch("stories", target.id, { doNotUse });
     }
-    await assertLiveRun(ctx, await ctx.db.get("mentions", target.id));
-    return ctx.db.patch("mentions", target.id, { doNotUse });
+    const mention = await ctx.db.get("mentions", target.id);
+    await assertLiveRun(ctx, mention);
+    await ctx.db.patch("mentions", target.id, { doNotUse });
+    await refreshStorySearch(ctx, mention!.storyId);
   },
 });
 
@@ -125,8 +139,9 @@ export const savePin = internalMutation({
     const pin = { lat, lng, geocodeLabel: label, geocodeConfidence: 1, category };
     const existing = await ctx.db.query("places").withIndex("by_mentionId", (q) => q.eq("mentionId", mentionId)).unique();
     // Fixing the pin of a removed place keeps it removed; it must never put the place back on Alexa.
-    if (existing) return ctx.db.patch("places", existing._id, existing.reviewStatus === "rejected" ? pin : { ...pin, reviewStatus: "approved" });
-    await ctx.db.insert("places", { storyId: mention!.storyId, runId: mention!.runId, mentionId, name: mention!.name, ...pin, reviewStatus: "approved" });
+    if (existing) await ctx.db.patch("places", existing._id, existing.reviewStatus === "rejected" ? pin : { ...pin, reviewStatus: "approved" });
+    else await ctx.db.insert("places", { storyId: mention!.storyId, runId: mention!.runId, mentionId, name: mention!.name, ...pin, reviewStatus: "approved" });
+    await refreshStorySearch(ctx, mention!.storyId);
   },
 });
 
@@ -145,5 +160,6 @@ export const renameMention = mutation({
     });
     const place = await ctx.db.query("places").withIndex("by_mentionId", (q) => q.eq("mentionId", mentionId)).unique();
     if (place) await ctx.db.patch("places", place._id, { name: trimmed, officialName: trimmed });
+    await refreshStorySearch(ctx, mention!.storyId);
   },
 });

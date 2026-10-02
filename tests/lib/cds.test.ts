@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildDocumentUrl, buildShowQueryUrl, fetchCds, parseEpisode, stripHtml, type CdsDocument } from "../../convex/lib/cds";
+import { buildDocumentUrl, buildShowQueryUrl, fetchCds, parseEpisode, seriesImageUrl, stripHtml, type CdsDocument } from "../../convex/lib/cds";
 import fixture from "../fixtures/cds-this-bites-episode.json";
 
 const doc = fixture as CdsDocument;
@@ -67,5 +67,19 @@ describe("fetchCds", () => {
     const fetchImpl = vi.fn().mockResolvedValue(unavailable);
     await expect(fetchCds("https://cds/x", "token", fetchImpl, vi.fn().mockResolvedValue(undefined))).rejects.toThrow("HTTP 503");
     expect(fetchImpl).toHaveBeenCalledTimes(4);
+  });
+});
+
+describe("seriesImageUrl", () => {
+  it("picks the square artwork from a CDS series document", () => {
+    const doc = { assets: { "718414860-image": { enclosures: [
+      { href: "https://f.prxu.org/13497/images/x/wide.jpg", rels: ["primary"] },
+      { href: "https://f.prxu.org/13497/images/x/square.jpg", rels: ["primary", "image-square"] },
+    ] } } };
+    expect(seriesImageUrl(doc)).toBe("https://f.prxu.org/13497/images/x/square.jpg");
+  });
+  it("falls back to the primary image, then to null", () => {
+    expect(seriesImageUrl({ assets: { a: { enclosures: [{ href: "https://f.prxu.org/p.jpg", rels: ["primary"] }] } } })).toBe("https://f.prxu.org/p.jpg");
+    expect(seriesImageUrl({})).toBeNull();
   });
 });

@@ -4,6 +4,7 @@ import { query } from "./_generated/server";
 import { attribution } from "./lib/attribution";
 import { normalizeForMatch } from "./lib/evidence";
 import { getShowProfile } from "./lib/shows";
+import { firstSentence } from "./lib/storySearch";
 
 // The contract with the Alexa MCP server: only rows from the editor-approved run, and
 // nothing an editor rejected or marked not-for-assistant-use. These are public queries
@@ -49,6 +50,7 @@ export const getStory = query({
       attribution: attribution(show, story.publishedAt),
       audioUrl: story.audioUrl,
       permalink: story.permalink ?? null,
+      imageUrl: story.imageUrl ?? null,
       mentions: mentions
         .filter((mention) => mention.entityType !== "place")
         .map(({ entityType, name, quote, startMs, relatedPlace }) => ({
@@ -103,5 +105,31 @@ export const searchStories = query({
       });
     }
     return [...results.values()].slice(0, 10);
+  },
+});
+
+/** Story-level search for Radio Commons: a listener's half-remembered words against published stories only. */
+export const searchStoryCards = query({
+  args: { text: v.string(), showSlug: v.optional(v.string()) },
+  handler: async (ctx, { text, showSlug }) => {
+    const search = normalizeForMatch(text);
+    if (!search) return [];
+    const hits = await ctx.db
+      .query("stories")
+      .withSearchIndex("search_story", (q) => {
+        const published = q.search("searchText", search).eq("reviewStatus", "approved").eq("doNotUse", false);
+        return showSlug ? published.eq("showSlug", showSlug) : published;
+      })
+      .take(5);
+    return hits
+      .filter((story) => story.summary && story.approvedRunId)
+      .map((story) => {
+        const show = getShowProfile(story.showSlug).name;
+        return {
+          storyId: story._id, title: story.title, show, showSlug: story.showSlug,
+          attribution: attribution(show, story.publishedAt), publishedAt: story.publishedAt,
+          hint: firstSentence(story.summary!), imageUrl: story.imageUrl ?? null,
+        };
+      });
   },
 });

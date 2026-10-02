@@ -42,6 +42,8 @@ export default defineSchema({
     audioUrl: v.string(),
     durationSec: v.number(),
     permalink: v.optional(v.string()),
+    imageUrl: v.optional(v.string()), // show artwork (CDS series image-square)
+    searchText: v.optional(v.string()), // published title + summary + topics + places (lib/storySearch)
     stage: stageValidator,
     proposedSummary: v.optional(v.string()), // from the latest extraction run
     summary: v.optional(v.string()), // the approved summary listeners hear
@@ -54,7 +56,8 @@ export default defineSchema({
   })
     .index("by_cdsId", ["cdsId"])
     .index("by_showSlug_and_publishedAt", ["showSlug", "publishedAt"])
-    .index("by_reviewStatus_and_publishedAt", ["reviewStatus", "publishedAt"]),
+    .index("by_reviewStatus_and_publishedAt", ["reviewStatus", "publishedAt"])
+    .searchIndex("search_story", { searchField: "searchText", filterFields: ["reviewStatus", "doNotUse", "showSlug"] }),
 
   sources: defineTable({
     storyId: v.id("stories"),

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { internal } from "../convex/_generated/api";
 import { parseEpisode, type CdsDocument } from "../convex/lib/cds";
 import fixture from "./fixtures/cds-this-bites-episode.json";
-import { makeTest } from "./helpers";
+import { makeTest, seedStory } from "./helpers";
 
 const episode = parseEpisode(fixture as CdsDocument)!;
 
@@ -33,5 +33,17 @@ describe("stories.upsertEpisode", () => {
     expect(state.stories).toHaveLength(1);
     expect(state.stories[0].title).toBe("Corrected title");
     expect(state.jobs).toHaveLength(1);
+  });
+});
+
+describe("story images", () => {
+  it("setShowImage gives every story of a show the show's artwork", async () => {
+    const t = makeTest();
+    const a = await seedStory(t, { cdsId: "a" });
+    const b = await seedStory(t, { cdsId: "b", showSlug: "uniquely-milwaukee" });
+    const result = await t.mutation(internal.stories.setShowImage, { showSlug: "this-bites", imageUrl: "https://f.prxu.org/tb.jpg" });
+    expect(result.updated).toBe(1);
+    expect((await t.run((ctx) => ctx.db.get("stories", a)))?.imageUrl).toBe("https://f.prxu.org/tb.jpg");
+    expect((await t.run((ctx) => ctx.db.get("stories", b)))?.imageUrl).toBeUndefined();
   });
 });

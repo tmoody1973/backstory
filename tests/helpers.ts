@@ -33,6 +33,7 @@ export async function seedStory(
       stage: "ingested",
       reviewStatus: "pending",
       doNotUse: false,
+      searchText: "",
       ...overrides,
     }),
   );

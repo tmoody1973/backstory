@@ -92,3 +92,16 @@ export async function fetchCds(
     await sleep(RETRY_DELAYS_MS[attempt]);
   }
 }
+
+interface ImageEnclosure {
+  href: string;
+  rels?: string[];
+}
+
+/** A podcast series' artwork from its CDS document: the square image, else the primary one. */
+// ponytail: series artwork only; per-episode PRX feed images were identical to it on 2026-10-02. Compare the feed's itunes:image per episode if that changes.
+export function seriesImageUrl(doc: { assets?: Record<string, { enclosures?: ImageEnclosure[] }> }): string | null {
+  const enclosures = Object.values(doc.assets ?? {}).flatMap((asset) => asset.enclosures ?? []);
+  const square = enclosures.find((e) => e.rels?.includes("image-square"));
+  return (square ?? enclosures.find((e) => e.rels?.includes("primary")))?.href ?? null;
+}
