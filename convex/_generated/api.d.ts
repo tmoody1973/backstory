@@ -27,11 +27,13 @@ import type * as lib_geocode from "../lib/geocode.js";
 import type * as lib_jevPeople from "../lib/jevPeople.js";
 import type * as lib_jevTopics from "../lib/jevTopics.js";
 import type * as lib_shows from "../lib/shows.js";
+import type * as lib_speakers from "../lib/speakers.js";
 import type * as lib_steps from "../lib/steps.js";
 import type * as lib_taxonomy from "../lib/taxonomy.js";
 import type * as lib_transcribeOutput from "../lib/transcribeOutput.js";
 import type * as public_ from "../public.js";
 import type * as sonnetExtract from "../sonnetExtract.js";
+import type * as speakers from "../speakers.js";
 import type * as stories from "../stories.js";
 import type * as transcripts from "../transcripts.js";
 
@@ -61,11 +63,13 @@ declare const fullApi: ApiFromModules<{
   "lib/jevPeople": typeof lib_jevPeople;
   "lib/jevTopics": typeof lib_jevTopics;
   "lib/shows": typeof lib_shows;
+  "lib/speakers": typeof lib_speakers;
   "lib/steps": typeof lib_steps;
   "lib/taxonomy": typeof lib_taxonomy;
   "lib/transcribeOutput": typeof lib_transcribeOutput;
   public: typeof public_;
   sonnetExtract: typeof sonnetExtract;
+  speakers: typeof speakers;
   stories: typeof stories;
   transcripts: typeof transcripts;
 }>;

@@ -57,3 +57,26 @@ export function findEvidence(index: TranscriptIndex, quote: string): EvidenceMat
   }
   return { startMs: hit.segment.startMs, speaker: hit.segment.speaker };
 }
+
+/** True when two words differ by one inserted, deleted or changed letter ("emmys" / "immys", "tariq" / "tarik"). */
+export function oneEditApart(a: string, b: string): boolean {
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i++;
+      j++;
+      continue;
+    }
+    if (++edits > 1) return false;
+    if (a.length > b.length) i++;
+    else if (b.length > a.length) j++;
+    else {
+      i++;
+      j++;
+    }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}

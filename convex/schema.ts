@@ -122,6 +122,14 @@ export default defineSchema({
     reviewStatus: reviewStatusValidator,
   }).index("by_storyId_and_runId", ["storyId", "runId"]),
 
+  speakerNames: defineTable({
+    storyId: v.id("stories"),
+    label: v.string(), // Transcribe's speaker label, e.g. spk_1
+    name: v.string(),
+    confidence: v.optional(v.number()), // Jev's confidence for suggestions
+    source: v.union(v.literal("suggested"), v.literal("editor")),
+  }).index("by_storyId", ["storyId"]),
+
   jobs: defineTable({
     kind: jobKindValidator,
     storyId: v.id("stories"),

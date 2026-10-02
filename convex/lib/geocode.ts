@@ -1,4 +1,4 @@
-import { normalizeForMatch } from "./evidence";
+import { normalizeForMatch, oneEditApart } from "./evidence";
 
 /** [longitude, latitude] of downtown Milwaukee, the order Amazon Location uses. */
 export const MILWAUKEE_CENTER: [number, number] = [-87.9065, 43.0389];
@@ -31,29 +31,6 @@ const stem = (word: string) => (word.length > 3 && word.endsWith("s") ? word.sli
 
 function nameWords(text: string): Set<string> {
   return new Set(normalizeForMatch(text).split(" ").filter((word) => word && !STOP_WORDS.has(word)).map(stem));
-}
-
-/** True when two words differ by one inserted, deleted or changed letter ("emmys" / "immys"). */
-function oneEditApart(a: string, b: string): boolean {
-  if (Math.abs(a.length - b.length) > 1) return false;
-  let i = 0;
-  let j = 0;
-  let edits = 0;
-  while (i < a.length && j < b.length) {
-    if (a[i] === b[j]) {
-      i++;
-      j++;
-      continue;
-    }
-    if (++edits > 1) return false;
-    if (a.length > b.length) i++;
-    else if (b.length > a.length) j++;
-    else {
-      i++;
-      j++;
-    }
-  }
-  return edits + (a.length - i) + (b.length - j) <= 1;
 }
 
 /** Same word, or a one-letter mishearing of a word of 4+ letters (Transcribe heard "Emmy's" for Immy's). */
