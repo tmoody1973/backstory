@@ -202,3 +202,17 @@ describe("getStory with a bad id", () => {
     }
   });
 });
+
+describe("getStory place addresses", () => {
+  it("returns each place's matched address, or null", async () => {
+    const t = makeTest();
+    const storyId = await seedStory(t);
+    await saveRun(t, storyId, "run-1");
+    await t.run(async (ctx) => {
+      const [place] = await ctx.db.query("places").take(1);
+      await ctx.db.patch("places", place._id, { geocodeConfidence: 0.9, lat: 43, lng: -87.9, geocodeLabel: "2394 S Kinnickinnic Ave, Milwaukee, WI 53207" });
+    });
+    await t.mutation(internal.admin.approveLatestRunForDemo, { storyId });
+    expect((await t.query(api.public.getStory, { storyId }))?.places[0]).toMatchObject({ address: "2394 S Kinnickinnic Ave, Milwaukee, WI 53207" });
+  });
+});
