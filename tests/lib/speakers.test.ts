@@ -22,12 +22,12 @@ describe("speakerCandidates", () => {
 
   it("treats a misheard spelling of a host as the host, keeping the correct spelling", () => {
     expect(speakerCandidates(getShowProfile("this-bites"), "", ["Tariq Moody", "Anne Christensen", "Kyle Knall"])).toEqual([
-      "Tarik Moody", "Ann Christensen", "Kyle Knall",
+      "Tarik Moody", "Ann Christenson", "Kyle Knall",
     ]);
   });
 
   it("starts from the This Bites hosts", () => {
-    expect(speakerCandidates(getShowProfile("this-bites"), "", [])).toEqual(["Tarik Moody", "Ann Christensen"]);
+    expect(speakerCandidates(getShowProfile("this-bites"), "", [])).toEqual(["Tarik Moody", "Ann Christenson"]);
   });
 });
 
@@ -39,9 +39,9 @@ describe("speakerLabels", () => {
 
 describe("speakerQuestions", () => {
   it("asks one multiple-choice question per speaker, with an 'someone else' option", () => {
-    const questions = speakerQuestions(["spk_0", "spk_1"], ["Tarik Moody", "Ann Christensen"]);
+    const questions = speakerQuestions(["spk_0", "spk_1"], ["Tarik Moody", "Ann Christenson"]);
     expect(Object.keys(questions)).toEqual(["spk_0", "spk_1"]);
-    expect(Object.keys(questions.spk_0.criteria)).toEqual(["Tarik Moody", "Ann Christensen", "someone else"]);
+    expect(Object.keys(questions.spk_0.criteria)).toEqual(["Tarik Moody", "Ann Christenson", "someone else"]);
   });
 });
 
@@ -49,14 +49,14 @@ describe("assignSpeakers", () => {
   it("names a speaker only when Jev is confident, and never gives two speakers the same name", () => {
     const answers = {
       spk_0: { choice: "Tarik Moody", confidence: 0.92 },
-      spk_1: { choice: "Ann Christensen", confidence: 0.88 },
+      spk_1: { choice: "Ann Christenson", confidence: 0.88 },
       spk_2: { choice: "Tarik Moody", confidence: 0.7 },
       spk_3: { choice: "Ruben Gaona", confidence: 0.4 },
       spk_4: { choice: "someone else", confidence: 0.95 },
     };
     expect(assignSpeakers(["spk_0", "spk_1", "spk_2", "spk_3", "spk_4"], answers)).toEqual([
       { label: "spk_0", name: "Tarik Moody", confidence: 0.92 },
-      { label: "spk_1", name: "Ann Christensen", confidence: 0.88 },
+      { label: "spk_1", name: "Ann Christenson", confidence: 0.88 },
     ]);
   });
 });

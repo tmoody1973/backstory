@@ -14,21 +14,21 @@ describe("speakers", () => {
     const t = makeTest();
     const storyId = await seedStory(t);
     await t.mutation(internal.speakers.saveSuggestions, { storyId, suggestions: [{ label: "spk_0", name: "Tarik Moody", confidence: 0.9 }] });
-    await t.mutation(internal.speakers.saveSuggestions, { storyId, suggestions: [{ label: "spk_1", name: "Ann Christensen", confidence: 0.8 }] });
+    await t.mutation(internal.speakers.saveSuggestions, { storyId, suggestions: [{ label: "spk_1", name: "Ann Christenson", confidence: 0.8 }] });
     const rows = await t.run((ctx) => ctx.db.query("speakerNames").collect());
     expect(rows.map(({ label, name, source }) => ({ label, name, source }))).toEqual([
-      { label: "spk_1", name: "Ann Christensen", source: "suggested" },
+      { label: "spk_1", name: "Ann Christenson", source: "suggested" },
     ]);
   });
 
   it("never overwrites a name an editor confirmed", async () => {
     const t = makeTest();
     const storyId = await seedStory(t);
-    await t.run((ctx) => ctx.db.insert("speakerNames", { storyId, label: "spk_0", name: "Ann Christensen", source: "editor" }));
+    await t.run((ctx) => ctx.db.insert("speakerNames", { storyId, label: "spk_0", name: "Ann Christenson", source: "editor" }));
     await t.mutation(internal.speakers.saveSuggestions, { storyId, suggestions: [{ label: "spk_0", name: "Tarik Moody", confidence: 0.9 }] });
     const rows = await t.run((ctx) => ctx.db.query("speakerNames").collect());
     expect(rows.map(({ label, name, source }) => ({ label, name, source }))).toEqual([
-      { label: "spk_0", name: "Ann Christensen", source: "editor" },
+      { label: "spk_0", name: "Ann Christenson", source: "editor" },
     ]);
   });
 });

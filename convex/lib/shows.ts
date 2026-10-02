@@ -30,7 +30,7 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     cdsCollectionId: "718413877",
     entityTypes: ["person", "organization", "place", "event", "dish"],
     actionKinds: ["visit", "reserve", "attend"],
-    hosts: ["Tarik Moody", "Ann Christensen"],
+    hosts: ["Tarik Moody", "Ann Christenson"],
     extractionNotes:
       "This Bites is a weekly Milwaukee food show. Restaurants, cafes and bars are places with category restaurant or bar; festival grounds are venue. Chefs and owners are people. A dish is a dish mention whose relatedPlace is the restaurant that serves it. Food festivals and pop-ups are events. The hosts' opinions are opinions: never state them as facts in the summary.",
     reviewer: "Tarik Moody",
