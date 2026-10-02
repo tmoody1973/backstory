@@ -91,14 +91,14 @@ async function itemsFor(ctx: QueryCtx, storyId: Id<"stories">, runId: string) {
   };
 }
 
-/** One row per transcript speaker label, in order of first appearance, with their first line so an editor can tell who it is. */
+/** One row per transcript speaker label, in order of first appearance, with their first line (and its times, for an audio clip) so an editor can tell who it is. */
 async function speakersFor(ctx: QueryCtx, storyId: Id<"stories">) {
   const segments = await ctx.db.query("transcriptSegments").withIndex("by_storyId_and_idx", (q) => q.eq("storyId", storyId)).take(MAX_SEGMENTS);
   const names = await ctx.db.query("speakerNames").withIndex("by_storyId", (q) => q.eq("storyId", storyId)).take(50);
-  const firstLine = new Map<string, string>();
-  for (const segment of segments) if (!firstLine.has(segment.speaker)) firstLine.set(segment.speaker, segment.text);
-  return [...firstLine].map(([label, sample]) => {
+  const firstLine = new Map<string, Doc<"transcriptSegments">>();
+  for (const segment of segments) if (!firstLine.has(segment.speaker)) firstLine.set(segment.speaker, segment);
+  return [...firstLine].map(([label, first]) => {
     const named = names.find((row) => row.label === label);
-    return { label, name: named?.name ?? null, source: named?.source ?? null, sample };
+    return { label, name: named?.name ?? null, source: named?.source ?? null, sample: first.text, startMs: first.startMs, endMs: first.endMs };
   });
 }

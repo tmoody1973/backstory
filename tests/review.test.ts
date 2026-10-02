@@ -69,8 +69,8 @@ describe("review.episode", () => {
     const episode = await t.withIdentity(REVIEWER).query(api.review.episode, { storyId });
     expect(episode?.story).toMatchObject({ title: expect.any(String), latestRunId: "run-1", proposedSummary: expect.any(String) });
     expect(episode?.speakers).toEqual([
-      { label: "spk_0", name: null, source: null, sample: "Welcome to This Bites." },
-      { label: "spk_1", name: null, source: null, sample: "A bittersweet farewell to Café Corazón in Bay View." },
+      { label: "spk_0", name: null, source: null, sample: "Welcome to This Bites.", startMs: 0, endMs: 3000 },
+      { label: "spk_1", name: null, source: null, sample: "A bittersweet farewell to Café Corazón in Bay View.", startMs: 3000, endMs: 9000 },
     ]);
     expect(episode?.mentions.map((m) => m.name)).toEqual(["Joe Sasto"]); // places are listed under places
     expect(episode?.places[0]).toMatchObject({ name: "Café Corazón", quote: "a bittersweet farewell to Café Corazón in Bay View" });
