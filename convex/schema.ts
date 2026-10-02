@@ -47,9 +47,12 @@ export default defineSchema({
     approvedRunId: v.optional(v.string()),
     reviewStatus: reviewStatusValidator,
     doNotUse: v.boolean(),
+    approvedBy: v.optional(v.string()), // verified email of the editor who approved the live run
+    approvedAt: v.optional(v.number()),
   })
     .index("by_cdsId", ["cdsId"])
-    .index("by_showSlug_and_publishedAt", ["showSlug", "publishedAt"]),
+    .index("by_showSlug_and_publishedAt", ["showSlug", "publishedAt"])
+    .index("by_reviewStatus_and_publishedAt", ["reviewStatus", "publishedAt"]),
 
   sources: defineTable({
     storyId: v.id("stories"),
