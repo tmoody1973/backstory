@@ -1,4 +1,4 @@
-import { MIN_QUOTE_WORDS, type Segment } from "./evidence";
+import { MIN_QUOTE_WORDS, normalizeForMatch, type Segment } from "./evidence";
 import { TOPIC_VALUES, type Topic } from "./taxonomy";
 
 export const JEV_URL = "https://api.typesafe.ai/v1/systemone";
@@ -85,7 +85,12 @@ export function pickTopics(answers: Record<string, JevAnswer>): PickedTopic[] {
  * (before short ones are dropped, so every candidate stays contiguous transcript text) until
  * they fit in one Choice.
  */
-export function passageCandidates(segments: Segment[]): Candidate[] {
+export function passageCandidates(segments: Segment[], excludeNames: string[] = []): Candidate[] {
+  const excluded = excludeNames.map(normalizeForMatch).filter(Boolean);
+  const namesExcluded = (text: string) => {
+    const padded = ` ${normalizeForMatch(text)} `;
+    return excluded.some((name) => padded.includes(` ${name} `));
+  };
   let passages = segments.map(({ text, startMs, speaker }) => ({ text, startMs, speaker }));
   while (passages.length > MAX_PASSAGES) {
     const merged = [];
@@ -97,6 +102,7 @@ export function passageCandidates(segments: Segment[]): Candidate[] {
   }
   return passages
     .filter((passage) => passage.text.split(/\s+/).filter(Boolean).length >= MIN_QUOTE_WORDS)
+    .filter((passage) => !namesExcluded(passage.text))
     .map((passage, index) => ({ id: `p${index}`, ...passage }));
 }
 
@@ -152,16 +158,52 @@ export async function askJev(
   return (await response.json()) as JevResponse;
 }
 
-/** Decision 007: Jev picks up to three topics, then the transcript passage that supports each one. */
+const PASSAGE_TRIES = 3;
+
+/** The top passages Jev chose for a topic, most likely first. */
+function rankedPassages(answer: JevAnswer | undefined, byId: Map<string, Candidate>): Candidate[] {
+  const ids = answer?.probabilities
+    ? Object.entries(answer.probabilities).sort(([, a], [, b]) => b - a).map(([id]) => id)
+    : answer?.choice ? [answer.choice] : [];
+  return ids.flatMap((id) => byId.get(id) ?? []).slice(0, PASSAGE_TRIES);
+}
+
+/**
+ * Decision 007: Jev picks up to three topics, then the transcript passage that supports each one.
+ * Decision 008: a passage that names a participant, student, patient, resident or minor is never
+ * used as a quote; the next-best passage is tried, and a topic with no clean passage is dropped.
+ */
 export async function jevTopicsFor(
   input: { title: string; segments: Segment[] },
   apiKey: string,
   fetchImpl: typeof fetch = fetch,
+  excludeNames: string[] = [],
 ) {
   const topicRun = await askJev(transcriptState(input.segments), topicQuestions(), apiKey, fetchImpl);
   const topics = pickTopics(topicRun.answers);
   if (topics.length === 0) return [];
-  const candidates = passageCandidates(input.segments);
-  const evidenceRun = await askJev(`Podcast episode: "${input.title}"`, evidenceQuestions(topics, candidates), apiKey, fetchImpl);
-  return pickEvidence(topics, evidenceRun.answers, candidates);
+  const candidates = passageCandidates(input.segments, excludeNames);
+  const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+  const state = `Podcast episode: "${input.title}"`;
+  const evidenceRun = await askJev(state, evidenceQuestions(topics, candidates), apiKey, fetchImpl);
+  const ranked = topics.map((topic) => ({ ...topic, passages: rankedPassages(evidenceRun.answers[topic.topic], byId) }));
+  const privacyQuestions = Object.fromEntries(
+    ranked.flatMap(({ topic, passages }) =>
+      passages.map((passage, rank) => [
+        `${topic}__${rank}`,
+        {
+          type: "noul",
+          instructions: {
+            passage: passage.text,
+            question: "Does this passage name, by name, a program participant, a student, a patient, a resident of a facility, or a minor?",
+          },
+        },
+      ]),
+    ),
+  );
+  const privacyRun = await askJev(state, privacyQuestions, apiKey, fetchImpl);
+  return ranked.flatMap(({ topic, confidence, passages }) => {
+    const clean = passages.find((_, rank) => (privacyRun.answers[`${topic}__${rank}`]?.noul ?? 1) < 0.5);
+    return clean ? [{ topic, confidence, quote: clean.text, startMs: clean.startMs, speaker: clean.speaker }] : [];
+  });
 }

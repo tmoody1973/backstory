@@ -47,3 +47,28 @@ export function judgePeople(names: string[], answers: Record<string, JevAnswer>)
   });
   return { kept, dropped };
 }
+
+/**
+ * Decision 008: participants, students, patients, residents, minors and hosts are always removed
+ * (privacy enforced in code, not left to the prompt). Everyone else is kept with Jev's probability
+ * that they're a real subject, so editors can sort or hide passing mentions instead of losing them.
+ */
+export function gentleJudge(names: string[], answers: Record<string, JevAnswer>) {
+  const kept: Array<{ name: string; subjectConfidence: number }> = [];
+  const dropped: Array<{ name: string; reason: string }> = [];
+  names.forEach((name, i) => {
+    const subject = answers[`subject_${i}`]?.noul;
+    const isProtected = answers[`protected_${i}`]?.noul;
+    const host = answers[`host_${i}`]?.noul;
+    if (subject === undefined || isProtected === undefined || host === undefined) {
+      dropped.push({ name, reason: "no judgment returned" });
+    } else if (isProtected >= THRESHOLD) {
+      dropped.push({ name, reason: "participant, student, patient, resident or minor" });
+    } else if (host >= THRESHOLD) {
+      dropped.push({ name, reason: "the show's host" });
+    } else {
+      kept.push({ name, subjectConfidence: subject });
+    }
+  });
+  return { kept, dropped };
+}

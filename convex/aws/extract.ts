@@ -5,7 +5,8 @@ import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { buildTranscriptIndex } from "../lib/evidence";
 import { applyEvidence, buildExtractionPrompt, extractionJsonSchema, extractionSchema, trimToCaps } from "../lib/extraction";
-import { jevTopicsFor } from "../lib/jevTopics";
+import { gentleJudge, peopleQuestions } from "../lib/jevPeople";
+import { askJev, jevTopicsFor, transcriptState } from "../lib/jevTopics";
 import { getShowProfile } from "../lib/shows";
 import { runStep, stepArgs } from "../lib/steps";
 
@@ -54,7 +55,19 @@ export const run = internalAction({
       // ponytail: Haiku still returns topics that are discarded here; drop them from its schema if token cost matters
       const typesafeKey = process.env.TYPESAFE_API_KEY;
       if (!typesafeKey) throw new Error("Missing Convex env var TYPESAFE_API_KEY");
-      const result = { ...checked, topics: await jevTopicsFor(input, typesafeKey) };
+      // Decision 008: Jev removes participants, students, patients, residents, minors and hosts,
+      // and scores the rest so editors can sort passing mentions.
+      const names = checked.mentions.filter((m) => m.entityType === "person").map((m) => m.name);
+      const judged = names.length
+        ? gentleJudge(names, (await askJev(transcriptState(input.segments), peopleQuestions(names), typesafeKey)).answers)
+        : { kept: [], dropped: [] };
+      for (const d of judged.dropped) console.log(`[backstory] ${args.storyId} people judge removed "${d.name}": ${d.reason}`);
+      const confidence = new Map(judged.kept.map((k) => [k.name, k.subjectConfidence]));
+      const mentions = checked.mentions.flatMap((m) =>
+        m.entityType !== "person" ? [m] : confidence.has(m.name) ? [{ ...m, subjectConfidence: confidence.get(m.name) }] : [],
+      );
+      const excludeNames = judged.dropped.map((d) => d.name);
+      const result = { ...checked, mentions, topics: await jevTopicsFor(input, typesafeKey, fetch, excludeNames) };
       for (const item of dropped) console.log(`[backstory] ${args.storyId} dropped ${item.kind} "${item.name}": ${item.reason}`);
       await ctx.runMutation(internal.extractions.save, { ...args, runId: `${args.storyId}:${Date.now()}`, result });
     });

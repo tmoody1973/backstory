@@ -51,6 +51,12 @@ describe("passageCandidates", () => {
     expect(candidates).toHaveLength(TEST_SEGMENTS.length);
   });
 
+  it("never offers a passage that names a person the judge removed", () => {
+    const candidates = passageCandidates(TEST_SEGMENTS, ["Joe Sasto"]);
+    expect(candidates.map((c) => c.text).join(" ")).not.toContain("Joe Sasto");
+    expect(candidates).toHaveLength(TEST_SEGMENTS.length - 1);
+  });
+
   it("merges neighbouring segments when there are more than a Choice allows", () => {
     const many = Array.from({ length: 600 }, (_, i) => ({ speaker: "spk_0", startMs: i * 1000, endMs: i * 1000 + 900, text: `Passage number ${i} has enough words.` }));
     const candidates = passageCandidates(many);
@@ -96,17 +102,37 @@ describe("jevTopicsFor", () => {
   const reply = (answers: object) =>
     ({ ok: true, status: 200, json: async () => ({ model: "jev-1.13.0", answers, usage: { input_tokens: 10, output_tokens: 1 } }) }) as Response;
 
-  it("asks for topics, then for each topic's passage, and returns verbatim quotes ready to save", async () => {
+  it("asks for topics, then each topic's passage, checks the passage for protected names, and returns verbatim quotes", async () => {
     const candidates = passageCandidates(TEST_SEGMENTS);
     const fetchImpl = vi.fn()
       .mockResolvedValueOnce(reply({ "food-drink": { type: "noul", noul: 0.96 }, arts: { type: "noul", noul: 0.1 } }))
-      .mockResolvedValueOnce(reply({ "food-drink": { type: "choice", choice: candidates[5].id, confidence: 0.8 } }));
+      .mockResolvedValueOnce(reply({ "food-drink": { type: "choice", choice: candidates[5].id, probabilities: { [candidates[5].id]: 0.8, [candidates[1].id]: 0.1 } } }))
+      .mockResolvedValueOnce(reply({ "food-drink__0": { type: "noul", noul: 0.02 }, "food-drink__1": { type: "noul", noul: 0.01 } }));
     const topics = await jevTopicsFor({ title: "Test", segments: TEST_SEGMENTS }, "key", fetchImpl);
     expect(topics).toEqual([
       { topic: "food-drink", confidence: 0.96, quote: TEST_SEGMENTS[5].text, startMs: 26000, speaker: "spk_1" },
     ]);
-    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
     expect(fetchImpl.mock.calls[0][1].headers).toMatchObject({ Authorization: "Bearer key" });
+  });
+
+  it("falls back to the next-best passage when the best one names a participant or minor", async () => {
+    const candidates = passageCandidates(TEST_SEGMENTS);
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(reply({ "food-drink": { type: "noul", noul: 0.96 } }))
+      .mockResolvedValueOnce(reply({ "food-drink": { type: "choice", choice: candidates[5].id, probabilities: { [candidates[5].id]: 0.8, [candidates[1].id]: 0.1 } } }))
+      .mockResolvedValueOnce(reply({ "food-drink__0": { type: "noul", noul: 0.91 }, "food-drink__1": { type: "noul", noul: 0.03 } }));
+    const topics = await jevTopicsFor({ title: "Test", segments: TEST_SEGMENTS }, "key", fetchImpl);
+    expect(topics[0].quote).toBe(TEST_SEGMENTS[1].text);
+  });
+
+  it("drops a topic when every candidate passage names a protected person", async () => {
+    const candidates = passageCandidates(TEST_SEGMENTS);
+    const fetchImpl = vi.fn()
+      .mockResolvedValueOnce(reply({ "food-drink": { type: "noul", noul: 0.96 } }))
+      .mockResolvedValueOnce(reply({ "food-drink": { type: "choice", choice: candidates[5].id, probabilities: { [candidates[5].id]: 1 } } }))
+      .mockResolvedValueOnce(reply({ "food-drink__0": { type: "noul", noul: 0.9 } }));
+    expect(await jevTopicsFor({ title: "Test", segments: TEST_SEGMENTS }, "key", fetchImpl)).toEqual([]);
   });
 
   it("skips the passage call when no topic clears the threshold", async () => {

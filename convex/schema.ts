@@ -75,6 +75,7 @@ export default defineSchema({
     ...quoteFields,
     speaker: v.string(),
     relatedPlace: v.optional(v.string()), // dish → the restaurant that serves it
+    subjectConfidence: v.optional(v.number()), // people only: Jev's probability they're a real subject, not a passing mention
     reviewStatus: reviewStatusValidator,
     doNotUse: v.boolean(),
     searchText: v.string(), // normalized name + related place + quote
