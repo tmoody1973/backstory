@@ -1,0 +1,118 @@
+{
+ "totals": {
+  "transcribe": 70,
+  "deepgram": 52,
+  "names": 94
+ },
+ "episodes": {
+  "E01": {
+   "names": 45,
+   "transcribe": 36,
+   "deepgram": 21,
+   "only_transcribe": [
+    "Adam Pawlak",
+    "Anytime Arepa",
+    "Arthur Ircink",
+    "Caf\u00e9 Bustelo",
+    "Caf\u00e9 Colada",
+    "Caf\u00e9 Coraz\u00f3n",
+    "Cochina Fipina",
+    "Freshwater Food & Wine Festival",
+    "Justin Abrahamian",
+    "Kyle Knall",
+    "Lisette Gan",
+    "Michael Cerda",
+    "Nompong",
+    "Paula",
+    "Third Street Market Hall",
+    "Wisconsin Foodie"
+   ],
+   "only_deepgram": [
+    "Bay View Neighborhood Association"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 16,
+   "duration_sec": 999.83673
+  },
+  "E02": {
+   "names": 13,
+   "transcribe": 10,
+   "deepgram": 10,
+   "only_transcribe": [
+    "Burscht",
+    "Ted's Ice Cream & Restaurant"
+   ],
+   "only_deepgram": [
+    "Hong Anh Palace",
+    "Lupi and Iris"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 15,
+   "duration_sec": 1661.8318
+  },
+  "E04": {
+   "names": 17,
+   "transcribe": 15,
+   "deepgram": 12,
+   "only_transcribe": [
+    "Kyle Knall",
+    "Megan Knoll",
+    "SA SA",
+    "Zokolo"
+   ],
+   "only_deepgram": [
+    "3rd Street Market Hall"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 3,
+   "duration_sec": 1342.8245
+  },
+  "E07": {
+   "names": 14,
+   "transcribe": 6,
+   "deepgram": 6,
+   "only_transcribe": [
+    "Amaranth Bakery & Cafe",
+    "Karen Bell",
+    "Loup"
+   ],
+   "only_deepgram": [
+    "Meghan Knall",
+    "Sabor Divino",
+    "Vientiane Noodle Shop"
+   ],
+   "speakers": {
+    "transcribe": 4,
+    "deepgram": 3
+   },
+   "keyterms": 16,
+   "duration_sec": 1041.4758
+  },
+  "E11": {
+   "names": 5,
+   "transcribe": 3,
+   "deepgram": 3,
+   "only_transcribe": [
+    "Chantelle Jewell"
+   ],
+   "only_deepgram": [
+    "Ruben Gaona"
+   ],
+   "speakers": {
+    "transcribe": 6,
+    "deepgram": 9
+   },
+   "keyterms": 11,
+   "duration_sec": 264.0718
+  }
+ }
+}

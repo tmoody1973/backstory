@@ -1,0 +1,260 @@
+{
+ "model": "jev-1.13.0",
+ "episodes": {
+  "E01": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.99
+   },
+   {
+    "label_type": "topic",
+    "value": "festival",
+    "confidence": 0.95
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.94
+   }
+  ],
+  "E02": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.99
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.93
+   }
+  ],
+  "E03": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.98
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.95
+   }
+  ],
+  "E04": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.99
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.95
+   }
+  ],
+  "E05": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.99
+   },
+   {
+    "label_type": "topic",
+    "value": "history",
+    "confidence": 0.88
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.85
+   }
+  ],
+  "E06": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.99
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.95
+   }
+  ],
+  "E07": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.99
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.96
+   }
+  ],
+  "E08": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.99
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.89
+   },
+   {
+    "label_type": "topic",
+    "value": "community",
+    "confidence": 0.53
+   }
+  ],
+  "E09": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.98
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.96
+   }
+  ],
+  "E10": [
+   {
+    "label_type": "topic",
+    "value": "food-drink",
+    "confidence": 0.98
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.71
+   }
+  ],
+  "E11": [
+   {
+    "label_type": "topic",
+    "value": "civic-life",
+    "confidence": 0.97
+   },
+   {
+    "label_type": "topic",
+    "value": "education",
+    "confidence": 0.92
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.57
+   }
+  ],
+  "E12": [
+   {
+    "label_type": "topic",
+    "value": "civic-life",
+    "confidence": 0.95
+   },
+   {
+    "label_type": "topic",
+    "value": "community",
+    "confidence": 0.91
+   },
+   {
+    "label_type": "topic",
+    "value": "arts",
+    "confidence": 0.88
+   }
+  ],
+  "E13": [
+   {
+    "label_type": "topic",
+    "value": "civic-life",
+    "confidence": 0.76
+   }
+  ],
+  "E14": [
+   {
+    "label_type": "topic",
+    "value": "civic-life",
+    "confidence": 0.89
+   },
+   {
+    "label_type": "topic",
+    "value": "community",
+    "confidence": 0.77
+   }
+  ],
+  "E15": [
+   {
+    "label_type": "topic",
+    "value": "music",
+    "confidence": 0.95
+   }
+  ],
+  "E16": [
+   {
+    "label_type": "topic",
+    "value": "education",
+    "confidence": 0.77
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.6
+   },
+   {
+    "label_type": "topic",
+    "value": "community",
+    "confidence": 0.56
+   }
+  ],
+  "E17": [
+   {
+    "label_type": "topic",
+    "value": "community",
+    "confidence": 0.91
+   },
+   {
+    "label_type": "topic",
+    "value": "business",
+    "confidence": 0.59
+   }
+  ],
+  "E18": [
+   {
+    "label_type": "topic",
+    "value": "sports",
+    "confidence": 0.96
+   },
+   {
+    "label_type": "topic",
+    "value": "history",
+    "confidence": 0.92
+   },
+   {
+    "label_type": "topic",
+    "value": "education",
+    "confidence": 0.87
+   }
+  ],
+  "E19": [
+   {
+    "label_type": "topic",
+    "value": "education",
+    "confidence": 0.97
+   }
+  ],
+  "E20": [
+   {
+    "label_type": "topic",
+    "value": "civic-life",
+    "confidence": 0.95
+   }
+  ]
+ }
+}

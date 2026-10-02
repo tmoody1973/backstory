@@ -1,0 +1,68 @@
+{
+ "_comment": "Names transcription must spell right, and known mishearings. Used by Deepgram hints, transcript clean-up and the Transcribe vocabulary. Tarik's corrections, 2026-10-01.",
+ "names": [
+  "Cocina Filipina"
+ ],
+ "corrections": [
+  {
+   "heard": "Tariq Moody",
+   "correct": "Tarik Moody"
+  },
+  {
+   "heard": "Anne Christensen",
+   "correct": "Ann Christenson"
+  },
+  {
+   "heard": "Ann Christensen",
+   "correct": "Ann Christenson"
+  },
+  {
+   "heard": "Adam Pollock",
+   "correct": "Adam Pawlak"
+  },
+  {
+   "heard": "Charlie Barron",
+   "correct": "Charlie Berens"
+  },
+  {
+   "heard": "Arthur Ursink",
+   "correct": "Arthur Ircink"
+  },
+  {
+   "heard": "Kyle Noll",
+   "correct": "Kyle Knall"
+  },
+  {
+   "heard": "Kyle Knoll",
+   "correct": "Kyle Knall"
+  },
+  {
+   "heard": "Tariq",
+   "correct": "Tarik"
+  },
+  {
+   "heard": "Charlie Barron's",
+   "correct": "Charlie Berens's"
+  },
+  {
+   "heard": "Barron",
+   "correct": "Berens"
+  },
+  {
+   "heard": "Emmy's African Cuisine",
+   "correct": "Immy's African Cuisine"
+  },
+  {
+   "heard": "Emmy's",
+   "correct": "Immy's"
+  },
+  {
+   "heard": "Christensen",
+   "correct": "Christenson"
+  },
+  {
+   "heard": "Chantel Jewell",
+   "correct": "Chantelle Jewell"
+  }
+ ]
+}
