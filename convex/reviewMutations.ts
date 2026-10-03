@@ -125,6 +125,16 @@ export const setDoNotUse = mutation({
   },
 });
 
+/** Whether Alexa may quote this episode's transcript (overrides the show's default). */
+export const setDetailedAnswers = mutation({
+  args: { storyId: v.id("stories"), allow: v.boolean() },
+  handler: async (ctx, { storyId, allow }) => {
+    await requireReviewer(ctx);
+    if (!(await ctx.db.get("stories", storyId))) throw new ConvexError({ code: "not_found" });
+    await ctx.db.patch("stories", storyId, { allowDetailedAnswers: allow });
+  },
+});
+
 /**
  * Saves the pin an editor got by typing an address (aws/pinLocation.run checks the reviewer, then calls this).
  * A person chose it, so it is approved at full confidence. Corrects an existing place, or makes a mention a place.

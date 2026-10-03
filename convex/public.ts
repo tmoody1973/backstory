@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { attribution } from "./lib/attribution";
+import { allowsDetailedAnswers, blockedNames, detailWords, mentionsBlocked, trimPassage } from "./lib/askStory";
 import { normalizeForMatch } from "./lib/evidence";
 import { getShowProfile } from "./lib/shows";
 import { firstSentence, relevantEnough } from "./lib/storySearch";
@@ -136,5 +137,45 @@ export const searchStoryCards = query({
           hint: firstSentence(story.summary!), imageUrl: story.imageUrl ?? null,
         };
       });
+  },
+});
+
+const MAX_PASSAGES = 3;
+const NO_PASSAGES = { passages: [] as { text: string; startMs: number; speaker: string | null }[] };
+
+/**
+ * Detail answers for Radio Commons: up to 3 short passages from one published episode's transcript, in episode order.
+ * The transcript isn't editor-reviewed, so the switch (show default unless an editor set it) and the name guard are the contract.
+ */
+export const askStory = query({
+  args: { storyId: v.string(), question: v.string() },
+  handler: async (ctx, args) => {
+    const storyId = ctx.db.normalizeId("stories", args.storyId);
+    const story = storyId ? await ctx.db.get("stories", storyId) : null;
+    const runId = story?.approvedRunId;
+    if (!storyId || !story || !runId || story.reviewStatus !== "approved" || story.doNotUse) return { status: "not_found" as const, ...NO_PASSAGES };
+    if (!allowsDetailedAnswers(story, getShowProfile(story.showSlug))) return { status: "not_allowed" as const, ...NO_PASSAGES };
+
+    const wanted = detailWords(args.question.slice(0, 300));
+    if (!wanted) return { status: "ok" as const, ...NO_PASSAGES };
+    const mentions = await ctx.db.query("mentions").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN);
+    const places = await ctx.db.query("places").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN);
+    const blocked = blockedNames(mentions, places);
+    const names = await ctx.db.query("speakerNames").withIndex("by_storyId", (q) => q.eq("storyId", storyId)).take(MAX_ROWS_PER_RUN);
+    const confirmed = new Map(names.filter((n) => n.source === "editor").map((n) => [n.label, n.name]));
+
+    const hits = await ctx.db
+      .query("transcriptSegments")
+      .withSearchIndex("search_text", (q) => q.search("text", wanted).eq("storyId", storyId))
+      .take(20);
+    const passages = hits
+      .filter((seg) => relevantEnough(wanted, normalizeForMatch(seg.text)))
+      .filter((seg) => !mentionsBlocked(seg.text, blocked))
+      // A passage spoken by someone whose name is blocked is skipped too: the guard beats a confirmed speaker name.
+      .filter((seg) => !mentionsBlocked(confirmed.get(seg.speaker) ?? "", blocked))
+      .slice(0, MAX_PASSAGES)
+      .sort((a, b) => a.startMs - b.startMs)
+      .map((seg) => ({ text: trimPassage(seg.text), startMs: seg.startMs, speaker: confirmed.get(seg.speaker) ?? null }));
+    return { status: "ok" as const, passages };
   },
 });

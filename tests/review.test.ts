@@ -63,6 +63,17 @@ describe("review.queue", () => {
 });
 
 describe("review.episode", () => {
+  it("reports the detailed-answers switch, resolved with the show's default", async () => {
+    const t = makeTest();
+    const storyId = await seedStory(t);
+    await saveRun(t, storyId, "run-1");
+    const before = await t.withIdentity(REVIEWER).query(api.review.episode, { storyId });
+    expect(before?.story).toMatchObject({ allowDetailedAnswers: true, detailedAnswersDefault: true });
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.setDetailedAnswers, { storyId, allow: false });
+    const after = await t.withIdentity(REVIEWER).query(api.review.episode, { storyId });
+    expect(after?.story).toMatchObject({ allowDetailedAnswers: false, detailedAnswersDefault: true });
+  });
+
   it("returns the latest run's items with quotes, speakers with a sample line, places low-confidence first", async () => {
     const t = makeTest();
     const storyId = await readyStory(t);

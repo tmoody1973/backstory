@@ -19,6 +19,8 @@ export interface ShowProfile {
   /** Show-specific guidance appended to the extraction prompt. */
   extractionNotes: string;
   reviewer: string;
+  /** Whether Alexa may quote this show's transcripts when an editor hasn't set the episode's switch. */
+  detailedAnswersDefault: boolean;
 }
 
 // Adding a show means adding a profile here, not changing pipeline code.
@@ -34,6 +36,7 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     extractionNotes:
       "This Bites is a weekly Milwaukee food show. Restaurants, cafes and bars are places with category restaurant or bar; festival grounds are venue. Chefs and owners are people. A dish is a dish mention whose relatedPlace is the restaurant that serves it. Food festivals and pop-ups are events. The hosts' opinions are opinions: never state them as facts in the summary.",
     reviewer: "Tarik Moody",
+    detailedAnswersDefault: true, // hosts and public businesses
   },
   "uniquely-milwaukee": {
     slug: "uniquely-milwaukee",
@@ -46,6 +49,7 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
       "Uniquely Milwaukee tells short stories about Milwaukee people, organizations and places. The people in a story are real residents: name them as they introduce themselves, and never record a private individual's home, street address or anything that would locate where they live. Nonprofits, programs, businesses and shops are organizations; give one a place mention too only if the story is set at its public location (category organization, venue or park). Never extract a participant in a program, a resident of a facility, a patient, or a minor as a person, even by first name: extract the staff, leaders, founders and public figures who speak for the story. The episode host is a person but not the subject. Ignore underwriting and membership credits such as 'supported by our Radio Milwaukee members'. Support actions point to the organization named in the story; remember actions are for stories about history or a person's legacy.",
     // ponytail: reviewer not yet named by the content team (PRD open question); Plan 2 needs a real one
     reviewer: "Uniquely Milwaukee producer (to confirm)",
+    detailedAnswersDefault: false, // residents and participants: an editor opts each episode in
   },
 };
 
