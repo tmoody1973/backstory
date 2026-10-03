@@ -53,6 +53,7 @@ export default defineSchema({
     doNotUse: v.boolean(),
     approvedBy: v.optional(v.string()), // verified email of the editor who approved the live run
     approvedAt: v.optional(v.number()),
+    allowDetailedAnswers: v.optional(v.boolean()), // transcript answers on Alexa; unset → the show's default (lib/shows)
   })
     .index("by_cdsId", ["cdsId"])
     .index("by_showSlug_and_publishedAt", ["showSlug", "publishedAt"])
@@ -73,7 +74,9 @@ export default defineSchema({
     startMs: v.number(),
     endMs: v.number(),
     text: v.string(),
-  }).index("by_storyId_and_idx", ["storyId", "idx"]),
+  })
+    .index("by_storyId_and_idx", ["storyId", "idx"])
+    .searchIndex("search_text", { searchField: "text", filterFields: ["storyId"] }),
 
   mentions: defineTable({
     storyId: v.id("stories"),
