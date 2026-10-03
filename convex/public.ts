@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { attribution } from "./lib/attribution";
@@ -141,6 +141,7 @@ export const searchStoryCards = query({
 });
 
 const MAX_PASSAGES = 3;
+const MAX_QUESTION = 500;
 const NO_PASSAGES = { passages: [] as { text: string; startMs: number; speaker: string | null }[] };
 
 /**
@@ -156,13 +157,23 @@ export const askStory = query({
     if (!storyId || !story || !runId || story.reviewStatus !== "approved" || story.doNotUse) return { status: "not_found" as const, ...NO_PASSAGES };
     if (!allowsDetailedAnswers(story, getShowProfile(story.showSlug))) return { status: "not_allowed" as const, ...NO_PASSAGES };
 
-    const wanted = detailWords(args.question.slice(0, 300));
+    if (args.question.length > MAX_QUESTION) throw new ConvexError({ code: "question_too_long" });
+    // Convex full-text search takes at most 16 terms.
+    const wanted = detailWords(args.question).split(" ").slice(0, 16).join(" ");
     if (!wanted) return { status: "ok" as const, ...NO_PASSAGES };
-    const mentions = await ctx.db.query("mentions").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN);
-    const places = await ctx.db.query("places").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN);
+    // The published run, plus a re-processed one under review: a removal there must count before it's republished.
+    const runs = [...new Set([runId, story.latestRunId ?? runId])];
+    const mentions = [];
+    const places = [];
+    for (const run of runs) {
+      mentions.push(...(await ctx.db.query("mentions").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", run)).take(MAX_ROWS_PER_RUN)));
+      places.push(...(await ctx.db.query("places").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", run)).take(MAX_ROWS_PER_RUN)));
+    }
     const blocked = blockedNames(mentions, places);
     const names = await ctx.db.query("speakerNames").withIndex("by_storyId", (q) => q.eq("storyId", storyId)).take(MAX_ROWS_PER_RUN);
     const confirmed = new Map(names.filter((n) => n.source === "editor").map((n) => [n.label, n.name]));
+    // Any name on a speaker, suggested or confirmed, can block their words; only a confirmed one is ever shown.
+    const blockedSpeakers = new Set(names.filter((n) => mentionsBlocked(n.name, blocked)).map((n) => n.label));
 
     const hits = await ctx.db
       .query("transcriptSegments")
@@ -172,7 +183,7 @@ export const askStory = query({
       .filter((seg) => relevantEnough(wanted, normalizeForMatch(seg.text)))
       .filter((seg) => !mentionsBlocked(seg.text, blocked))
       // A passage spoken by someone whose name is blocked is skipped too: the guard beats a confirmed speaker name.
-      .filter((seg) => !mentionsBlocked(confirmed.get(seg.speaker) ?? "", blocked))
+      .filter((seg) => !blockedSpeakers.has(seg.speaker))
       .slice(0, MAX_PASSAGES)
       .sort((a, b) => a.startMs - b.startMs)
       .map((seg) => ({ text: trimPassage(seg.text), startMs: seg.startMs, speaker: confirmed.get(seg.speaker) ?? null }));

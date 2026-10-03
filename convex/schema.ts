@@ -86,6 +86,7 @@ export default defineSchema({
     ...quoteFields,
     speaker: v.string(),
     relatedPlace: v.optional(v.string()), // dish → the restaurant that serves it
+    originalName: v.optional(v.string()), // the transcript's spelling, kept when an editor renames (askStory's guard needs it)
     subjectConfidence: v.optional(v.number()), // people only: Jev's probability they're a real subject, not a passing mention
     reviewStatus: reviewStatusValidator,
     removeReason: v.optional(removeReasonValidator),
