@@ -150,6 +150,35 @@ describe("reviewMutations.setPlaceNeighborhood and setDoNotUse", () => {
   });
 });
 
+describe("reviewMutations.setReservationUrl", () => {
+  it("saves a booking-site link that getStory and the review page return; clearing removes it", async () => {
+    const t = makeTest();
+    const storyId = await ready(t);
+    const [place] = await rows(t, "places");
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.decideItem, { item: { table: "places", id: place._id }, status: "approved" });
+    const url = "https://www.opentable.com/r/bread-house-milwaukee";
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.setReservationUrl, { placeId: place._id, url });
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.approveEpisode, { storyId, runId: "run-1", summary: SUMMARY });
+    expect((await t.query(api.public.getStory, { storyId }))?.places[0].reservationUrl).toBe(url);
+    expect((await t.withIdentity(REVIEWER).query(api.review.episode, { storyId }))?.places[0]).toMatchObject({ reservationUrl: url });
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.setReservationUrl, { placeId: place._id, url: null });
+    expect((await t.query(api.public.getStory, { storyId }))?.places[0].reservationUrl).toBeNull();
+  });
+
+  it("only booking sites over https, and only reviewers", async () => {
+    const t = makeTest();
+    await ready(t);
+    const [place] = await rows(t, "places");
+    for (const url of ["https://evil.example/book", "http://www.opentable.com/r/x", "javascript:alert(1)", "https://opentable.com.evil.example/x"]) {
+      await expect(t.withIdentity(REVIEWER).mutation(api.reviewMutations.setReservationUrl, { placeId: place._id, url })).rejects.toThrow(/invalid_reservation_url/);
+    }
+    for (const url of ["https://resy.com/cities/mke/venues/x", "https://www.exploretock.com/x", "https://www.sevenrooms.com/reservations/x"]) {
+      await t.withIdentity(REVIEWER).mutation(api.reviewMutations.setReservationUrl, { placeId: place._id, url });
+    }
+    await expect(t.mutation(api.reviewMutations.setReservationUrl, { placeId: place._id, url: null })).rejects.toThrow(/not_signed_in/);
+  });
+});
+
 describe("reviewMutations.savePin (Add location)", () => {
   const PIN = { lat: 43.0, lng: -88.02, label: "8004 W National Ave, West Allis, WI 53214", category: "venue" as const };
 

@@ -107,6 +107,32 @@ export const setPlaceNeighborhood = mutation({
   },
 });
 
+// Booking sites a Reserve button may open; anything else could send a listener somewhere unexpected.
+const BOOKING_HOSTS = ["opentable.com", "resy.com", "exploretock.com", "sevenrooms.com"];
+const MAX_URL = 500;
+
+/** A reservation page on a known booking site, over https; null clears it. */
+export function validReservationUrl(url: string): boolean {
+  if (url.length > MAX_URL) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && BOOKING_HOSTS.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
+  }
+}
+
+export const setReservationUrl = mutation({
+  args: { placeId: v.id("places"), url: v.union(v.string(), v.null()) },
+  handler: async (ctx, { placeId, url }) => {
+    await requireReviewer(ctx);
+    const trimmed = url?.trim() || undefined;
+    if (trimmed && !validReservationUrl(trimmed)) throw new ConvexError({ code: "invalid_reservation_url" });
+    await assertLiveRun(ctx, await ctx.db.get("places", placeId));
+    await ctx.db.patch("places", placeId, { reservationUrl: trimmed });
+  },
+});
+
 export const setDoNotUse = mutation({
   args: {
     target: v.union(v.object({ table: v.literal("stories"), id: v.id("stories") }), v.object({ table: v.literal("mentions"), id: v.id("mentions") })),

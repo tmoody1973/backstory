@@ -89,7 +89,7 @@ async function itemsFor(ctx: QueryCtx, storyId: Id<"stories">, runId: string) {
     places: places
       .map((p) => ({
         id: p._id, mentionId: p.mentionId, name: p.name, officialName: p.officialName ?? null, category: p.category,
-        geocodeLabel: p.geocodeLabel ?? null, geocodeConfidence: p.geocodeConfidence ?? null, neighborhood: p.neighborhood ?? null,
+        geocodeLabel: p.geocodeLabel ?? null, geocodeConfidence: p.geocodeConfidence ?? null, neighborhood: p.neighborhood ?? null, reservationUrl: p.reservationUrl ?? null,
         quote: mentionById.get(p.mentionId)?.quote ?? "", startMs: mentionById.get(p.mentionId)?.startMs ?? 0, reviewStatus: p.reviewStatus,
         removeReason: p.removeReason ?? null, attention: placeAttention(p),
       }))

@@ -67,6 +67,7 @@ export const getStory = query({
         lng: place.lng ?? null,
         neighborhood: place.neighborhood ?? null,
         address: place.geocodeLabel ?? null,
+        reservationUrl: place.reservationUrl ?? null,
         quote: liveMentions.get(place.mentionId)!.quote,
       })),
       topics: topics.map(({ topic, confidence, quote }) => ({ topic, confidence, quote })),

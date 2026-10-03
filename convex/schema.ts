@@ -108,6 +108,7 @@ export default defineSchema({
     officialName: v.optional(v.string()), // the business's own spelling from the map match ("Immy's", not Transcribe's "Emmy's")
     geocodeConfidence: v.optional(v.number()), // 0–1; unset until the geocode step runs
     neighborhood: v.optional(v.string()), // set by editors in Plan 2
+    reservationUrl: v.optional(v.string()), // editor-set booking page (OpenTable, Resy, Tock, SevenRooms); Radio Commons shows Reserve
     fieldGuideVenueId: v.optional(v.string()), // matched in Plan 2
     lastConfirmedAt: v.optional(v.number()), // restaurant freshness, Plan 5
     reviewStatus: reviewStatusValidator,
