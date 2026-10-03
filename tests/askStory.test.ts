@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { api } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
-import { mentionsBlocked, trimPassage } from "../convex/lib/askStory";
+import { blockedNames, mentionsBlocked, trimPassage } from "../convex/lib/askStory";
 import { makeTest, saveRun, seedStory, type TestConvex } from "./helpers";
 
 const REVIEWER = { email: "tarik@radiomilwaukee.org", emailVerified: true, subject: "u", issuer: "https://clerk.test" };
@@ -166,3 +166,69 @@ describe("askStory helpers", () => {
     expect(trimmed.endsWith(".")).toBe(true);
   });
 });
+
+describe("askStory guard (review fixes)", () => {
+  const rejectJoe = (t: TestConvex) => t.run(async (ctx) => {
+    const joe = (await ctx.db.query("mentions").collect()).find((m) => m.name === "Joe Sasto")!;
+    await ctx.db.patch("mentions", joe._id, { reviewStatus: "rejected", removeReason: "sensitive" });
+  });
+
+  it("blocks a removed person's first name or last name on its own", async () => {
+    const t = makeTest();
+    const storyId = await published(t);
+    await rejectJoe(t);
+    await segments(t, storyId, [
+      { text: "Joe told me the stromboli is secret.", startMs: 1000 },
+      { text: "Mr. Sasto's stromboli recipe.", startMs: 2000 },
+      { text: STROMBOLI, startMs: 3000 },
+    ]);
+    expect((await ask(t, storyId, "stromboli")).passages.map((p) => p.startMs)).toEqual([3000]);
+  });
+
+  it("never blocks on a host's name or a short word", () => {
+    const blocked = blockedNames([{ name: "Ann Lee", entityType: "person", reviewStatus: "rejected", doNotUse: false }], []);
+    expect(blocked).toContain("lee");
+    expect(blocked).not.toContain("ann");
+  });
+
+  it("still blocks the transcript's spelling after an editor renamed the mention", async () => {
+    const t = makeTest();
+    const storyId = await published(t);
+    const joeId = await t.run(async (ctx) => (await ctx.db.query("mentions").collect()).find((m) => m.name === "Joe Sasto")!._id);
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.renameMention, { mentionId: joeId, name: "Jo Saasto" });
+    await t.run((ctx) => ctx.db.patch("mentions", joeId, { reviewStatus: "rejected", removeReason: "sensitive" }));
+    await segments(t, storyId, [{ text: "Sasto makes the stromboli.", startMs: 1000 }]);
+    expect((await ask(t, storyId, "stromboli")).passages).toEqual([]);
+  });
+
+  it("skips a removed person's own words even when their speaker name was only suggested", async () => {
+    const t = makeTest();
+    const storyId = await published(t);
+    await rejectJoe(t);
+    await t.run((ctx) => ctx.db.insert("speakerNames", { storyId, label: "spk_3", name: "Joe Sasto", source: "suggested" }));
+    await segments(t, storyId, [{ text: "My stromboli recipe is secret.", startMs: 1000, speaker: "spk_3" }]);
+    expect((await ask(t, storyId, "stromboli")).passages).toEqual([]);
+  });
+
+  it("a removal in a re-processed (not yet republished) run counts right away", async () => {
+    const t = makeTest();
+    const storyId = await published(t);
+    await saveRun(t, storyId, "run-2");
+    await t.run(async (ctx) => {
+      const joe2 = (await ctx.db.query("mentions").collect()).find((m) => m.name === "Joe Sasto" && m.runId === "run-2")!;
+      await ctx.db.patch("mentions", joe2._id, { reviewStatus: "rejected", removeReason: "sensitive" });
+    });
+    await segments(t, storyId, [{ text: "Joe Sasto and the stromboli.", startMs: 1000 }]);
+    expect((await ask(t, storyId, "stromboli")).passages).toEqual([]);
+  });
+
+  it("refuses an over-long question and survives a many-word one", async () => {
+    const t = makeTest();
+    const storyId = await published(t);
+    await segments(t, storyId, [{ text: STROMBOLI, startMs: 1000 }]);
+    await expect(ask(t, storyId, "x".repeat(501))).rejects.toThrow(/question_too_long/);
+    const many = `stromboli ${Array.from({ length: 30 }, (_, i) => `word${i}`).join(" ")}`;
+    expect((await ask(t, storyId, many)).status).toBe("ok");
+  });
+});
+

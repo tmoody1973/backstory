@@ -12,16 +12,23 @@ export function allowsDetailedAnswers(story: { allowDetailedAnswers?: boolean },
  * misheard names included), anything kept off Alexa, and any do-not-use mention.
  */
 export function blockedNames(
-  mentions: { name: string; entityType: string; reviewStatus: string; removeReason?: string; doNotUse: boolean }[],
+  mentions: { name: string; originalName?: string; entityType: string; reviewStatus: string; removeReason?: string; doNotUse: boolean }[],
   places: { name: string; officialName?: string; removeReason?: string }[],
 ): string[] {
-  const names = [
-    ...mentions
-      .filter((m) => (m.entityType === "person" && m.reviewStatus === "rejected") || m.removeReason === "sensitive" || m.doNotUse)
-      .map((m) => m.name),
+  const blockedMentions = mentions.filter((m) => (m.entityType === "person" && m.reviewStatus === "rejected") || m.removeReason === "sensitive" || m.doNotUse);
+  const full = [
+    ...blockedMentions.flatMap((m) => [m.name, m.originalName ?? ""]),
     ...places.filter((p) => p.removeReason === "sensitive").flatMap((p) => [p.name, p.officialName ?? ""]),
-  ];
-  return [...new Set(names.map(normalizeForMatch).filter(Boolean))];
+  ].map(normalizeForMatch);
+  // People are called by first or last name alone once introduced ("Maria told me…"), so each part of a blocked
+  // person's name blocks too. Over-blocking only hides an answer; under-blocking says a private name aloud.
+  // ponytail: word-level only; nicknames and misspellings ("Terrence") still pass — UM stays off by default for that reason.
+  const parts = blockedMentions
+    .filter((m) => m.entityType === "person")
+    .flatMap((m) => [m.name, m.originalName ?? ""])
+    .flatMap((name) => normalizeForMatch(name).split(" "))
+    .filter((word) => word.length >= 3 && !NAME_STOP.has(word));
+  return [...new Set([...full, ...parts].filter(Boolean))];
 }
 
 /** Whole-word match on normalized text. normalizeForMatch drops apostrophes, so "Sasto's" arrives as "sastos". */
@@ -36,6 +43,11 @@ export function trimPassage(text: string, max = MAX_PASSAGE): string {
   const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("? "), cut.lastIndexOf("! "));
   return end > 80 ? cut.slice(0, end + 1) : `${cut.slice(0, max - 1).trimEnd()}…`;
 }
+
+const NAME_STOP = new Set([
+  "the", "and", "mrs", "van", "von", "del", "der", "los", "las",
+  ...Object.values(SHOW_PROFILES).flatMap((show) => show.hosts.flatMap((host) => normalizeForMatch(host).split(" "))),
+]);
 
 // "What did Ann say about the stromboli?" → "stromboli": the question words and hosts are how a listener asks, not what's in the passage.
 const ASKING_WORDS = new Set([

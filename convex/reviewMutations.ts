@@ -166,6 +166,7 @@ export const renameMention = mutation({
     await assertLiveRun(ctx, mention);
     await ctx.db.patch("mentions", mentionId, {
       name: trimmed,
+      originalName: mention!.originalName ?? mention!.name,
       searchText: normalizeForMatch(`${trimmed} ${mention!.relatedPlace ?? ""} ${mention!.quote}`),
     });
     const place = await ctx.db.query("places").withIndex("by_mentionId", (q) => q.eq("mentionId", mentionId)).unique();
