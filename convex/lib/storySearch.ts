@@ -50,13 +50,19 @@ const stem = (word: string) => (word.length > 3 && word.endsWith("s") ? word.sli
 
 /**
  * Convex search ranks any story that shares one word with the query. For a spoken answer that is too loose:
- * a story is a match only if at least half of the listener's meaningful words appear in it.
+ * a story is a match only if at least half of the listener's meaningful words appear in it, and at least two
+ * when they said two or more ("House of Correction" must not match a story about Bread House).
+ * Words run together or split ("icecream" / "ice cream", "south side" / "Southside") count as the same.
  */
 // ponytail: word overlap with a plural stem; swap for a scored ranker if listeners phrase things in ways this misses
 export function relevantEnough(query: string, searchText: string): boolean {
   const wanted = [...new Set(normalizeForMatch(query).split(" ").filter((w) => w.length > 1 && !FILLER.has(w)).map(stem))];
   if (wanted.length === 0) return false;
-  const have = new Set(searchText.split(" ").map(stem));
-  const found = wanted.filter((w) => have.has(w)).length;
-  return found >= Math.ceil(wanted.length / 2);
+  const words = searchText.split(" ");
+  const have = new Set([...words, ...words.slice(1).map((w, i) => words[i] + w)].map(stem));
+  const found = new Set(wanted.filter((w) => have.has(w)));
+  wanted.slice(1).forEach((w, i) => {
+    if (have.has(stem(wanted[i] + w))) found.add(wanted[i]).add(w);
+  });
+  return found.size >= Math.max(Math.ceil(wanted.length / 2), Math.min(2, wanted.length));
 }

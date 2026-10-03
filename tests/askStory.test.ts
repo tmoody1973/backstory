@@ -232,3 +232,56 @@ describe("askStory guard (review fixes)", () => {
   });
 });
 
+describe("listener audit: fuller quotes, transcript search, latest", () => {
+  it("adds the next line to a very short passage, and the guard checks the added line", async () => {
+    const t = makeTest();
+    const storyId = await published(t);
+    await segments(t, storyId, [
+      { text: "Il Ponte.", startMs: 1000 },
+      { text: "It's a New York-style Italian place opening September 15.", startMs: 2000 },
+    ]);
+    expect((await ask(t, storyId, "Il Ponte")).passages).toEqual([
+      { text: "Il Ponte. It's a New York-style Italian place opening September 15.", startMs: 1000, speaker: null },
+    ]);
+    await t.run(async (ctx) => {
+      const joe = (await ctx.db.query("mentions").collect()).find((m) => m.name === "Joe Sasto")!;
+      await ctx.db.patch("mentions", joe._id, { reviewStatus: "rejected", removeReason: "sensitive" });
+    });
+    await segments(t, storyId, [{ text: "Stromboli.", startMs: 3000 }, { text: "Joe Sasto makes it.", startMs: 4000 }]);
+    expect((await ask(t, storyId, "stromboli")).passages).toEqual([]);
+  });
+
+  it("finds a story by a detail only its transcript has, guarded like detail answers", async () => {
+    const t = makeTest();
+    const storyId = await published(t);
+    await segments(t, storyId, [{ text: STROMBOLI, startMs: 645_000 }]);
+    const [hit] = await t.query(api.public.searchStoryCards, { text: "the episode where they talked about stromboli" });
+    expect(hit).toMatchObject({ storyId, hint: `Mentioned at 10:45: "${STROMBOLI}"` });
+    // Not for an episode whose detailed answers are off.
+    await t.withIdentity(REVIEWER).mutation(api.reviewMutations.setDetailedAnswers, { storyId, allow: false });
+    expect(await t.query(api.public.searchStoryCards, { text: "stromboli" })).toEqual([]);
+  });
+
+  it("transcript search skips passages naming a removed person, and unpublished episodes", async () => {
+    const t = makeTest();
+    const storyId = await published(t);
+    await t.run(async (ctx) => {
+      const joe = (await ctx.db.query("mentions").collect()).find((m) => m.name === "Joe Sasto")!;
+      await ctx.db.patch("mentions", joe._id, { reviewStatus: "rejected", removeReason: "sensitive" });
+    });
+    await segments(t, storyId, [{ text: "Joe's stromboli.", startMs: 1000 }]);
+    const pending = await seedStory(t, { cdsId: "fis-2" });
+    await segments(t, pending, [{ text: "The stromboli here is great.", startMs: 1000 }]);
+    expect(await t.query(api.public.searchStoryCards, { text: "stromboli" })).toEqual([]);
+  });
+
+  it("lists the newest published stories, optionally for one show", async () => {
+    const t = makeTest();
+    const older = await published(t, { cdsId: "fis-a", publishedAt: Date.UTC(2026, 8, 1) });
+    const newer = await published(t, { cdsId: "fis-b", publishedAt: Date.UTC(2026, 8, 20), showSlug: "uniquely-milwaukee" });
+    await seedStory(t, { cdsId: "fis-c", publishedAt: Date.UTC(2026, 9, 1) }); // not published
+    expect((await t.query(api.public.latestStoryCards, {})).map((s) => s.storyId)).toEqual([newer, older]);
+    expect((await t.query(api.public.latestStoryCards, { showSlug: "this-bites" })).map((s) => s.storyId)).toEqual([older]);
+  });
+});
+

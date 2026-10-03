@@ -41,12 +41,24 @@ describe("relevantEnough", () => {
     expect(relevantEnough("the festival at cafe corazon", text)).toBe(true);
   });
   it("ignores the show names a listener says out loud", () => {
-    expect(relevantEnough("This Bites beer festival", text)).toBe(true); // without the show name: beer, festival → 1 of 2
-    expect(relevantEnough("Uniquely Milwaukee beer festival", text)).toBe(true);
+    // Without the show name: beer, festival → 1 of 2. Two meaningful words need two matches (a wrong story is worse than none).
+    expect(relevantEnough("This Bites beer festival", text)).toBe(false);
+    expect(relevantEnough("This Bites wine festival", text)).toBe(true);
+    expect(relevantEnough("Uniquely Milwaukee wine festival", text)).toBe(true);
   });
   it("ignores filler words and plural endings", () => {
     expect(relevantEnough("that Milwaukee story about the festivals", text)).toBe(true);
     expect(relevantEnough("the story about Milwaukee", text)).toBe(false); // nothing meaningful left
+  });
+});
+
+describe("relevantEnough: listener audit", () => {
+  it("one shared common word is not enough when the listener said two", () => {
+    expect(relevantEnough("House of Correction", "frugal dining bread house hong anh palace")).toBe(false);
+  });
+  it("matches words a listener runs together or splits", () => {
+    expect(relevantEnough("teds icecream", "teds ice cream restaurant wauwatosa")).toBe(true);
+    expect(relevantEnough("south side politician", "supervisor represents southside neighborhoods")).toBe(true);
   });
 });
 
