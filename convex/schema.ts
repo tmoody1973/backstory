@@ -7,7 +7,7 @@ export const reviewStatusValidator = v.union(v.literal("pending"), v.literal("ap
 /** Why an editor removed an item: the AI got it wrong, it is true but shouldn't be on Alexa, or it's too minor to matter. */
 export const removeReasonValidator = v.union(v.literal("wrong"), v.literal("sensitive"), v.literal("minor"));
 export const entityTypeValidator = v.union(
-  v.literal("person"), v.literal("organization"), v.literal("place"), v.literal("event"), v.literal("dish"),
+  v.literal("person"), v.literal("organization"), v.literal("place"), v.literal("event"), v.literal("dish"), v.literal("artist"),
 );
 export const placeCategoryValidator = v.union(
   v.literal("restaurant"), v.literal("bar"), v.literal("venue"), v.literal("park"), v.literal("organization"),
