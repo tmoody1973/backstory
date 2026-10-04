@@ -4,6 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
 import { enqueue, markDone } from "./jobs";
 import { normalizeForMatch } from "./lib/evidence";
+import { editorPlaceDetails, placeKey } from "./lib/placeDirectory";
 import { actionKindValidator, entityTypeValidator, placeCategoryValidator, topicValidator } from "./schema";
 
 // A 30-minute episode is ~600 Transcribe segments; this ceiling covers multi-hour audio.
@@ -56,6 +57,8 @@ export const save = internalMutation({
   handler: async (ctx, { jobId, storyId, runId, result }) => {
     const placeMentions = new Map<string, Id<"mentions">>();
     const keepOff = await keptOffAlexa(ctx, storyId);
+    // Neighborhood, reservation link, details and a hand-set pin follow the place onto the new run.
+    const carried = await editorPlaceDetails(ctx);
     for (const mention of result.mentions) {
       // An editor said "true, but keep off Alexa" on an earlier run: the new run starts with the same decision.
       const decision = keepOff.has(normalizeForMatch(mention.name))
@@ -79,6 +82,7 @@ export const save = internalMutation({
         placeMentions.set(normalizeForMatch(mention.name), mentionId);
         await ctx.db.insert("places", {
           storyId, runId, mentionId, name: mention.name, category: mention.placeCategory, ...decision,
+          ...(carried.get(placeKey({ name: mention.name })) ?? {}),
         });
       }
     }

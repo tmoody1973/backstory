@@ -1,7 +1,8 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { internalMutation, mutation, type MutationCtx } from "./_generated/server";
+import { internalMutation, internalQuery, mutation, type MutationCtx } from "./_generated/server";
 import { approveRun } from "./lib/approveRun";
+import { livePlaceRows, placeKey } from "./lib/placeDirectory";
 import { normalizeForMatch } from "./lib/evidence";
 import { requireReviewer } from "./lib/reviewAuth";
 import { refreshStorySearch } from "./lib/storySearch";
@@ -122,6 +123,56 @@ export function validReservationUrl(url: string): boolean {
   }
 }
 
+/** One place, every published episode: neighborhood and/or reservation link (a field left out stays as it is; null clears). */
+export const setPlaceDetails = mutation({
+  args: { key: v.string(), neighborhood: v.optional(v.union(v.string(), v.null())), reservationUrl: v.optional(v.union(v.string(), v.null())) },
+  handler: async (ctx, { key, neighborhood, reservationUrl }) => {
+    await requireReviewer(ctx);
+    const patch: { neighborhood?: string; reservationUrl?: string } = {};
+    if (neighborhood !== undefined) {
+      const trimmed = neighborhood?.trim() || undefined;
+      if (trimmed && trimmed.length > MAX_NEIGHBORHOOD) throw new ConvexError({ code: "invalid_neighborhood" });
+      patch.neighborhood = trimmed;
+    }
+    if (reservationUrl !== undefined) {
+      const trimmed = reservationUrl?.trim() || undefined;
+      if (trimmed && !validReservationUrl(trimmed)) throw new ConvexError({ code: "invalid_reservation_url" });
+      patch.reservationUrl = trimmed;
+    }
+    let updated = 0;
+    for (const { place } of await livePlaceRows(ctx)) {
+      if (placeKey(place) !== key) continue;
+      await ctx.db.patch("places", place._id, patch);
+      updated++;
+    }
+    if (updated === 0) throw new ConvexError({ code: "not_found" });
+    return updated;
+  },
+});
+
+/** "Fetch details" results (aws/placeDetails checks the reviewer first): phone, website and hours on every live copy of the place. */
+export const saveDetails = internalMutation({
+  args: { key: v.string(), phone: v.optional(v.string()), website: v.optional(v.string()), openingHours: v.optional(v.string()) },
+  handler: async (ctx, { key, phone, website, openingHours }) => {
+    let updated = 0;
+    for (const { place } of await livePlaceRows(ctx)) {
+      if (placeKey(place) !== key) continue;
+      await ctx.db.patch("places", place._id, { phone, website, openingHours, detailsFetchedAt: Date.now() });
+      updated++;
+    }
+    return updated;
+  },
+});
+
+/** The pin and name "Fetch details" searches near, from the first live copy of the place that has a pin. */
+export const placeForDetails = internalQuery({
+  args: { key: v.string() },
+  handler: async (ctx, { key }) => {
+    const pinned = (await livePlaceRows(ctx)).map(({ place }) => place).find((p) => placeKey(p) === key && p.lat !== undefined && p.lng !== undefined);
+    return pinned ? { name: pinned.officialName ?? pinned.name, address: pinned.geocodeLabel ?? null, lat: pinned.lat!, lng: pinned.lng! } : null;
+  },
+});
+
 export const setReservationUrl = mutation({
   args: { placeId: v.id("places"), url: v.union(v.string(), v.null()) },
   handler: async (ctx, { placeId, url }) => {
@@ -177,6 +228,11 @@ export const savePin = internalMutation({
     // Fixing the pin of a removed place keeps it removed; it must never put the place back on Alexa.
     if (existing) await ctx.db.patch("places", existing._id, existing.reviewStatus === "rejected" ? pin : { ...pin, reviewStatus: "approved" });
     else await ctx.db.insert("places", { storyId: mention!.storyId, runId: mention!.runId, mentionId, name: mention!.name, ...pin, reviewStatus: "approved" });
+    // The same place in other episodes gets the same hand-set pin (category and review decisions stay theirs).
+    const key = placeKey(existing ?? { name: mention!.name });
+    for (const { place } of await livePlaceRows(ctx)) {
+      if (place.mentionId !== mentionId && placeKey(place) === key) await ctx.db.patch("places", place._id, { lat, lng, geocodeLabel: label, geocodeConfidence: 1 });
+    }
     await refreshStorySearch(ctx, mention!.storyId);
   },
 });

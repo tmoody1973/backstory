@@ -1,4 +1,5 @@
 import { allowsDetailedAnswers } from "./lib/askStory";
+import { placeKey } from "./lib/placeDirectory";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { query, type QueryCtx } from "./_generated/server";
@@ -125,3 +126,51 @@ function countItems({ mentions, places, topics, actions }: Items) {
   const all = [...mentions, ...places, ...topics, ...actions];
   return { items: all.length, needsYou: all.filter((item) => item.reviewStatus === "pending" && item.attention).length };
 }
+
+/** Places & Organizations: one row per published place (by name) across episodes, flagged for what an editor should fill in. */
+export const places = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireReviewer(ctx);
+    const groups = new Map<string, {
+      key: string; name: string; kind: "place" | "organization"; category: string; stories: { storyId: string; title: string; showName: string }[];
+      hasPin: boolean; lowConfidence: boolean; neighborhood: string | null; reservationUrl: string | null; address: string | null;
+      phone: string | null; website: string | null; openingHours: string | null; mentionId: string | null;
+    }>();
+    const add = (key: string, story: Doc<"stories">, init: () => Parameters<typeof groups.set>[1]) => {
+      const group = groups.get(key) ?? init();
+      if (!group.stories.some((s) => s.storyId === story._id)) group.stories.push({ storyId: story._id, title: story.title, showName: getShowProfile(story.showSlug).name });
+      groups.set(key, group);
+      return group;
+    };
+    for (const story of await ctx.db.query("stories").take(500)) {
+      const runId = story.approvedRunId;
+      if (!runId || story.reviewStatus !== "approved" || story.doNotUse) continue;
+      const places = await ctx.db.query("places").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", story._id).eq("runId", runId)).take(200);
+      const mentions = await ctx.db.query("mentions").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", story._id).eq("runId", runId)).take(200);
+      const placeMentions = new Set(places.map((p) => p.mentionId));
+      for (const p of places.filter((p) => p.reviewStatus === "approved")) {
+        const g = add(placeKey(p), story, () => ({
+          key: placeKey(p), name: p.officialName ?? p.name, kind: "place", category: p.category, stories: [], hasPin: false, lowConfidence: false,
+          neighborhood: null, reservationUrl: null, address: null, phone: null, website: null, openingHours: null, mentionId: p.mentionId,
+        }));
+        g.hasPin ||= p.lat !== undefined;
+        g.lowConfidence ||= p.geocodeConfidence !== undefined && p.geocodeConfidence < 0.8;
+        g.neighborhood ??= p.neighborhood ?? null;
+        g.reservationUrl ??= p.reservationUrl ?? null;
+        g.address ??= p.geocodeLabel ?? null;
+        g.phone ??= p.phone ?? null;
+        g.website ??= p.website ?? null;
+        g.openingHours ??= p.openingHours ?? null;
+      }
+      // Organizations the story names but hasn't placed on a map: listed so an editor can Add location.
+      for (const m of mentions.filter((m) => m.entityType === "organization" && m.reviewStatus === "approved" && !m.doNotUse && !placeMentions.has(m._id))) {
+        add(placeKey(m), story, () => ({
+          key: placeKey(m), name: m.name, kind: "organization", category: "organization", stories: [], hasPin: false, lowConfidence: false,
+          neighborhood: null, reservationUrl: null, address: null, phone: null, website: null, openingHours: null, mentionId: m._id,
+        }));
+      }
+    }
+    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name));
+  },
+});

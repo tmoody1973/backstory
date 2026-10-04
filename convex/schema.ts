@@ -109,6 +109,10 @@ export default defineSchema({
     geocodeConfidence: v.optional(v.number()), // 0–1; unset until the geocode step runs
     neighborhood: v.optional(v.string()), // set by editors in Plan 2
     reservationUrl: v.optional(v.string()), // editor-set booking page (OpenTable, Resy, Tock, SevenRooms); Radio Commons shows Reserve
+    phone: v.optional(v.string()), // "Fetch details" (Amazon Location, stored use)
+    website: v.optional(v.string()),
+    openingHours: v.optional(v.string()), // display text, e.g. "Tue–Sun 11 AM–9 PM"
+    detailsFetchedAt: v.optional(v.number()),
     fieldGuideVenueId: v.optional(v.string()), // matched in Plan 2
     lastConfirmedAt: v.optional(v.number()), // restaurant freshness, Plan 5
     reviewStatus: reviewStatusValidator,
