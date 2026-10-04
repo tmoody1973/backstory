@@ -4,7 +4,7 @@ import { BedrockRuntimeClient, ConverseCommand, type ToolInputSchema } from "@aw
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { buildTranscriptIndex } from "../lib/evidence";
-import { checkSong } from "../lib/song";
+import { checkSong, songEvidenceText } from "../lib/song";
 import { applyEvidence, buildExtractionPrompt, extractionJsonSchema, extractionSchema, trimToCaps } from "../lib/extraction";
 import { gentleJudge, peopleQuestions } from "../lib/jevPeople";
 import { askJev, jevTopicsFor, transcriptState } from "../lib/jevTopics";
@@ -68,7 +68,7 @@ export const run = internalAction({
         m.entityType !== "person" ? [m] : confidence.has(m.name) ? [{ ...m, subjectConfidence: confidence.get(m.name) }] : [],
       );
       const excludeNames = judged.dropped.map((d) => d.name);
-      const song = profile.contentType === "episode" ? null : checkSong(extraction.song, input.segments.map((s) => s.text).join(" "));
+      const song = profile.contentType === "episode" ? null : checkSong(extraction.song, songEvidenceText(input.title, input.segments.map((s) => s.text)));
       const result = { ...checked, mentions, topics: await jevTopicsFor(input, typesafeKey, fetch, excludeNames), song };
       for (const item of dropped) console.log(`[backstory] ${args.storyId} dropped ${item.kind} "${item.name}": ${item.reason}`);
       await ctx.runMutation(internal.extractions.save, { ...args, runId: `${args.storyId}:${Date.now()}`, result });

@@ -46,3 +46,8 @@ export function checkSong(raw: Raw, articleText: string): Song | null {
   if (setList.length > 0) song.setList = setList;
   return song;
 }
+
+/** What a song record is checked against: the station-written title ("…: Rosenau & Sanborn, 'Walrus'") and the article. */
+export function songEvidenceText(title: string, paragraphs: string[]): string {
+  return [title, ...paragraphs].join(" ");
+}
