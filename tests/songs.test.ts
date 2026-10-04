@@ -82,3 +82,25 @@ describe("song records", () => {
     expect(await t.query(api.public.getStory, { storyId })).toMatchObject({ contentType: "episode", song: null });
   });
 });
+
+describe("review fixes", () => {
+  it("re-transcribing a premiere re-reads its article, never the song audio (no sung lyrics)", async () => {
+    const t = makeTest();
+    const { storyId } = await premiere(t);
+    await t.mutation(internal.admin.retranscribe, { storyId });
+    const jobs = await t.run((ctx) => ctx.db.query("jobs").collect());
+    expect(jobs.at(-1)).toMatchObject({ kind: "article", status: "queued" });
+  });
+
+  it("a transcript search hit in an article says whose words, not 'Mentioned at 0:00'", async () => {
+    const t = makeTest();
+    const { storyId, jobId } = await premiere(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("transcriptSegments", { storyId, idx: 0, speaker: "article", startMs: 0, endMs: 0, text: "Glitzy are rock-solid residents of the city's live environment and their stromboliesque energy." });
+    });
+    await save(t, storyId, jobId, "run-1", SONG);
+    await publish(t, storyId, "run-1");
+    const cards = await t.query(api.public.searchStoryCards, { text: "stromboliesque energy" });
+    expect(cards[0]?.hint).toMatch(/^Radio Milwaukee's premiere says: "/);
+  });
+});

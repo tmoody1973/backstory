@@ -164,7 +164,9 @@ async function transcriptMatches(ctx: QueryCtx, text: string, showSlug?: string)
     const passage = await passageAt(ctx, seg, await storyGuard(ctx, story));
     if (!passage) continue;
     seen.add(seg.storyId);
-    results.push(storyCard(story, `Mentioned at ${clock(passage.startMs)}: "${passage.text}"`));
+    // An article has no timeline: say whose words they are instead of "Mentioned at 0:00".
+    const where = story.contentType === "premiere" ? "Radio Milwaukee's premiere says" : story.contentType === "session" ? "Radio Milwaukee's session write-up says" : `Mentioned at ${clock(passage.startMs)}`;
+    results.push(storyCard(story, `${where}: "${passage.text}"`));
   }
   return results;
 }

@@ -48,8 +48,11 @@ export const reextract = internalMutation({
 export const retranscribe = internalMutation({
   args: { storyId: v.id("stories") },
   handler: async (ctx, { storyId }) => {
-    if (!(await ctx.db.get("stories", storyId))) throw new Error(`Story ${storyId} not found`);
-    await enqueue(ctx, "transcribe", storyId, transcribeStep());
+    const story = await ctx.db.get("stories", storyId);
+    if (!story) throw new Error(`Story ${storyId} not found`);
+    // Premieres and sessions are read from their article: transcribing a premiere's song would store sung lyrics.
+    if (story.contentType !== "episode") await enqueue(ctx, "article", storyId, internal.articles.run);
+    else await enqueue(ctx, "transcribe", storyId, transcribeStep());
   },
 });
 
