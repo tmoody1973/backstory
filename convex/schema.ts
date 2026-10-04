@@ -24,7 +24,8 @@ export const stageValidator = v.union(
   v.literal("ingested"), v.literal("transcribing"), v.literal("transcribed"),
   v.literal("extracted"), v.literal("geocoded"), v.literal("needs_editor"),
 );
-export const jobKindValidator = v.union(v.literal("transcribe"), v.literal("extract"), v.literal("geocode"));
+export const jobKindValidator = v.union(v.literal("transcribe"), v.literal("article"), v.literal("extract"), v.literal("geocode"));
+export const contentTypeValidator = v.union(v.literal("episode"), v.literal("premiere"), v.literal("session"));
 export const jobStatusValidator = v.union(
   v.literal("queued"), v.literal("running"), v.literal("retrying"), v.literal("done"), v.literal("needs_editor"),
 );
@@ -35,7 +36,7 @@ export default defineSchema({
   stories: defineTable({
     cdsId: v.string(),
     showSlug: v.string(),
-    contentType: v.literal("episode"), // Plan 4 widens this for premieres, picks and sessions
+    contentType: contentTypeValidator, // premieres and sessions are read from their articles, not transcribed
     title: v.string(),
     teaserText: v.string(), // CDS show notes: spelling hints for the model, never evidence
     publishedAt: v.number(),
@@ -128,6 +129,23 @@ export default defineSchema({
     confidence: v.number(),
     ...quoteFields,
     basis: v.literal("transcript"),
+    reviewStatus: reviewStatusValidator,
+    removeReason: v.optional(removeReasonValidator),
+  }).index("by_storyId_and_runId", ["storyId", "runId"]),
+
+  // Premieres and sessions: the song (or set) the article is about. The playlist tool will match against these.
+  songs: defineTable({
+    storyId: v.id("stories"),
+    runId: v.string(),
+    kind: v.union(v.literal("premiere"), v.literal("session")),
+    artist: v.string(),
+    title: v.optional(v.string()),
+    album: v.optional(v.string()),
+    releaseDate: v.optional(v.string()), // YYYY-MM-DD
+    credits: v.array(v.object({ role: v.string(), name: v.string() })),
+    releaseShow: v.optional(v.object({ venue: v.string(), date: v.string() })),
+    setList: v.optional(v.array(v.string())),
+    audioUrl: v.optional(v.string()), // premieres only (decision 012: never a session's)
     reviewStatus: reviewStatusValidator,
     removeReason: v.optional(removeReasonValidator),
   }).index("by_storyId_and_runId", ["storyId", "runId"]),

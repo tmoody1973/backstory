@@ -9,6 +9,7 @@
  */
 
 import type * as admin from "../admin.js";
+import type * as articles from "../articles.js";
 import type * as aws_extract from "../aws/extract.js";
 import type * as aws_geocode from "../aws/geocode.js";
 import type * as aws_pinLocation from "../aws/pinLocation.js";
@@ -24,6 +25,7 @@ import type * as jevPeople from "../jevPeople.js";
 import type * as jevTopics from "../jevTopics.js";
 import type * as jobs from "../jobs.js";
 import type * as lib_approveRun from "../lib/approveRun.js";
+import type * as lib_article from "../lib/article.js";
 import type * as lib_askStory from "../lib/askStory.js";
 import type * as lib_attention from "../lib/attention.js";
 import type * as lib_attribution from "../lib/attribution.js";
@@ -40,6 +42,7 @@ import type * as lib_placeDirectory from "../lib/placeDirectory.js";
 import type * as lib_reviewAuth from "../lib/reviewAuth.js";
 import type * as lib_reviewers from "../lib/reviewers.js";
 import type * as lib_shows from "../lib/shows.js";
+import type * as lib_song from "../lib/song.js";
 import type * as lib_speakers from "../lib/speakers.js";
 import type * as lib_steps from "../lib/steps.js";
 import type * as lib_storySearch from "../lib/storySearch.js";
@@ -61,6 +64,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  articles: typeof articles;
   "aws/extract": typeof aws_extract;
   "aws/geocode": typeof aws_geocode;
   "aws/pinLocation": typeof aws_pinLocation;
@@ -76,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   jevTopics: typeof jevTopics;
   jobs: typeof jobs;
   "lib/approveRun": typeof lib_approveRun;
+  "lib/article": typeof lib_article;
   "lib/askStory": typeof lib_askStory;
   "lib/attention": typeof lib_attention;
   "lib/attribution": typeof lib_attribution;
@@ -92,6 +97,7 @@ declare const fullApi: ApiFromModules<{
   "lib/reviewAuth": typeof lib_reviewAuth;
   "lib/reviewers": typeof lib_reviewers;
   "lib/shows": typeof lib_shows;
+  "lib/song": typeof lib_song;
   "lib/speakers": typeof lib_speakers;
   "lib/steps": typeof lib_steps;
   "lib/storySearch": typeof lib_storySearch;

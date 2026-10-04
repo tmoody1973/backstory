@@ -30,6 +30,15 @@ export const loadInput = internalQuery({
 });
 
 const evidence = { quote: v.string(), startMs: v.number(), speaker: v.string() };
+const songValidator = v.object({
+  artist: v.string(),
+  title: v.optional(v.string()),
+  album: v.optional(v.string()),
+  releaseDate: v.optional(v.string()),
+  credits: v.array(v.object({ role: v.string(), name: v.string() })),
+  releaseShow: v.optional(v.object({ venue: v.string(), date: v.string() })),
+  setList: v.optional(v.array(v.string())),
+});
 
 export const save = internalMutation({
   args: {
@@ -52,6 +61,7 @@ export const save = internalMutation({
       actions: v.array(
         v.object({ kind: actionKindValidator, label: v.string(), placeName: v.union(v.string(), v.null()), ...evidence }),
       ),
+      song: v.optional(v.union(v.null(), songValidator)),
     }),
   },
   handler: async (ctx, { jobId, storyId, runId, result }) => {
@@ -99,6 +109,14 @@ export const save = internalMutation({
         quote: action.quote,
         startMs: action.startMs,
         reviewStatus: "pending",
+      });
+    }
+    const story = await ctx.db.get("stories", storyId);
+    if (result.song && story && story.contentType !== "episode") {
+      const kind = story.contentType;
+      await ctx.db.insert("songs", {
+        storyId, runId, kind, ...result.song, reviewStatus: "pending",
+        ...(kind === "premiere" && story.audioUrl ? { audioUrl: story.audioUrl } : {}),
       });
     }
     await ctx.db.patch("stories", storyId, { proposedSummary: result.summary, latestRunId: runId, stage: "extracted" });

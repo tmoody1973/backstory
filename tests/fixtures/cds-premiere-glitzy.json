@@ -1,0 +1,124 @@
+{
+ "id": "g-s921-16717",
+ "title": "Milwaukee Music Premiere: Glitzy, 'Effort'",
+ "teaser": "Just a few weeks from the release of their debut album, the indie-rock band share this standout single about the unsteady ground of relationships.",
+ "publishDateTime": "2026-10-01T06:30:00-05:00",
+ "audio": [
+  {
+   "href": "#/assets/g-s921-16718",
+   "rels": [
+    "primary",
+    "headline"
+   ]
+  }
+ ],
+ "images": [
+  {
+   "href": "#/assets/g-s921-16726",
+   "rels": [
+    "primary"
+   ]
+  }
+ ],
+ "webPages": [
+  {
+   "href": "https://radiomilwaukee.org/local-music/2026-10-01/new-milwaukee-music-glitzy",
+   "rels": [
+    "canonical"
+   ]
+  }
+ ],
+ "layout": [
+  {
+   "href": "#/assets/g-s921-16726"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1000"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1001"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1002"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1003"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1004"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1005"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1006"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1007"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1008"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1009"
+  },
+  {
+   "href": "#/assets/g-s921-16717-1010"
+  }
+ ],
+ "assets": {
+  "g-s921-16717-1000": {
+   "text": "<em>Every week, the </em><a href=\"https://radiomilwaukee.org/tags/milwaukee-music-premiere\" target=\"_blank\"><strong><em><u>Milwaukee Music Premiere</u></em></strong></a><em> connects the city's artists with our listening audience. If you're an artist with a track you'd like us to debut exclusively on Radio Milwaukee, head over to our </em><a href=\"https://radiomilwaukee.org/music-submission\" target=\"_blank\"><em><u>Music Submission page</u></em></a><em> to learn how.</em>"
+  },
+  "g-s921-16717-1001": {
+   "text": "The city's music scene has a lot of facets, and different ones shine brighter for different people. For a lot of folks, it's the live venues that stand out — a perspective that can skew your vision, even about a band you really dig."
+  },
+  "g-s921-16717-1002": {
+   "text": "Today's Milwaukee Music Premiere is a prime example. <a href=\"https://glitzy.bandcamp.com/\" target=\"_blank\">Glitzy</a> are rock-solid residents of the city's live environment, bringing effort and energy and excellence to every show. With them matriculating regularly among Milwaukee's live stages, it feels like they've been around longer than their 2022 start date (in a good way, obviously). And that's exactly how much time they needed to put together their first full-length album, which includes the track we're helping them debut here."
+  },
+  "g-s921-16717-1003": {
+   "text": "\"Effort\" falls on the janglier end of Glitzy's spectrum and splits into two soundscapes:"
+  },
+  "g-s921-16717-1004": {
+   "text": "<ol start=\"1\"><li>Relatively sparse, delicate verses featuring almost chime-like guitar touches.</li><li>A heavier chorus with big riffs and machine-gun snare sharing the spotlight.</li></ol>"
+  },
+  "g-s921-16717-1005": {
+   "text": "The vocals mirror that approach and transmit vulnerability at first, wavering through the track's first eight lines that capture the uncertainty we all feel in our relationships:"
+  },
+  "g-s921-16717-1006": {
+   "text": "<em>Unless I go back</em><br><em>Say 'sorry, you're right'</em><br><em>I'll soak in the effort</em><br><em>To bitterly fight</em>"
+  },
+  "g-s921-16717-1007": {
+   "text": "<em>Hey what do you call that</em><br><em>When you disappear </em><br><em>Sometimes I got effort </em><br><em>But I'm never all ears </em>"
+  },
+  "g-s921-16717-1008": {
+   "text": "Glitzy aren't going for subtlety or subtext on this one. The song, as they noted, \"is about the everyday struggles of a relationship and feeling like you could disappear or even feel like a different person at times. 'Effort' also relates to the ability to be honest and apologize to your partner, even when it feels uncomfortable to do so.\""
+  },
+  "g-s921-16717-1009": {
+   "text": "While it deals with a difficult life moment, \"Effort\" is an easy listen thanks to the assistance of Shane Hochstetler from Howl Street Recordings (recording and mixing) and Carl Saff (mastering). The gentler aspects of the track play nicely with the purposely rougher edges, creating a sound that underlines the uncertainty of the subject matter."
+  },
+  "g-s921-16717-1010": {
+   "text": "The whole thing sounds damn good on headphones, which you can experience when you listen to \"Effort\" on demand right here or on 88Nine throughout today (6:30 and 10:30 a.m.; 2:30 and 6:30 p.m.). The song will also land on Glitzy's debut album, <em>Say Sorry / You're Right</em>, which comes out Oct. 23. The band will throw <a href=\"https://xrayarcade.com/calendar/2026/10/23/glitzy\" target=\"_blank\"><u>a release party the same day at Sugar Maple</u></a>, with support from My Melody, Casual Sex and DJambo."
+  },
+  "g-s921-16718": {
+   "duration": 216,
+   "enclosures": [
+    {
+     "href": "https://cpa.ds.npr.org/s921/audio/2026/09/glitzy-effort.mp3",
+     "type": "audio/mpeg"
+    }
+   ]
+  },
+  "g-s921-16726": {
+   "enclosures": [
+    {
+     "href": "https://npr.brightspotcdn.com/square/glitzy.jpg",
+     "rels": [
+      "image-square",
+      "scalable"
+     ]
+    }
+   ]
+  }
+ }
+}

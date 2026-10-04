@@ -40,6 +40,20 @@ export const extractionSchema = z.object({
       z.object({ kind: z.enum(ACTION_KINDS), label: z.string().min(1), placeName: z.string().nullable(), quote: z.string() }),
     )
     .max(MAX_ACTIONS),
+  // Premieres and sessions only; a malformed record becomes null rather than failing the article.
+  song: z
+    .object({
+      artist: z.string(),
+      title: z.string().nullable().optional(),
+      album: z.string().nullable().optional(),
+      releaseDate: z.string().nullable().optional(),
+      credits: z.array(z.object({ role: z.string(), name: z.string() })).nullable().optional(),
+      releaseShow: z.object({ venue: z.string(), date: z.string() }).nullable().optional(),
+      setList: z.array(z.string()).nullable().optional(),
+    })
+    .nullable()
+    .optional()
+    .catch(null),
 });
 
 /**
@@ -103,6 +117,12 @@ export function buildExtractionPrompt(input: {
     '- Action label: a short phrase saying what to do and where, for example "Visit Café Corazón in Riverwest".',
     "- summary: two sentences describing the episode. It is labeled as a summary, so never present opinions as facts or put words in anyone's mouth.",
     `- ${input.profile.extractionNotes}`,
+    ...(input.profile.contentType === "episode"
+      ? ["- song: always null."]
+      : [
+          "- This is a Radio Milwaukee ARTICLE, not a recording: the TRANSCRIPT below is its paragraphs. Quote from it word for word as usual.",
+          "- song: fill artist, title, album, releaseDate (YYYY-MM-DD), credits [{role, name}], releaseShow {venue, date YYYY-MM-DD} and setList only with what the article states; null for anything it doesn't. Never put song lyrics anywhere.",
+        ]),
     "",
     "SHOW NOTES:",
     input.teaserText,

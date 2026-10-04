@@ -20,6 +20,7 @@ const itemValidator = v.union(
   v.object({ table: v.literal("places"), id: v.id("places") }),
   v.object({ table: v.literal("storyTopics"), id: v.id("storyTopics") }),
   v.object({ table: v.literal("storyActions"), id: v.id("storyActions") }),
+  v.object({ table: v.literal("songs"), id: v.id("songs") }),
 );
 
 /** Only the run under review or the run on the air can change; older runs are history. */
@@ -55,6 +56,11 @@ export const decideItem = mutation({
         row = await ctx.db.get("storyActions", item.id);
         await assertLiveRun(ctx, row);
         await ctx.db.patch("storyActions", item.id, decision);
+        break;
+      case "songs":
+        row = await ctx.db.get("songs", item.id);
+        await assertLiveRun(ctx, row);
+        await ctx.db.patch("songs", item.id, decision);
         break;
     }
     await refreshStorySearch(ctx, row!.storyId);
@@ -167,6 +173,29 @@ export const placeNameForKey = internalQuery({
   handler: async (ctx, { key }) => {
     const place = (await livePlaceRows(ctx)).map(({ place }) => place).find((p) => placeKey(p) === key);
     return place ? (place.officialName ?? place.name) : null;
+  },
+});
+
+const MAX_SONG_FIELD = 200;
+
+/** An editor fixes the song record: a field left out stays; an empty string clears it. */
+export const setSongFields = mutation({
+  args: { songId: v.id("songs"), title: v.optional(v.string()), album: v.optional(v.string()), releaseDate: v.optional(v.string()) },
+  handler: async (ctx, { songId, title, album, releaseDate }) => {
+    await requireReviewer(ctx);
+    const song = await ctx.db.get("songs", songId);
+    await assertLiveRun(ctx, song);
+    const patch: { title?: string; album?: string; releaseDate?: string } = {};
+    for (const [key, value] of [["title", title], ["album", album]] as const) {
+      if (value === undefined) continue;
+      if (value.trim().length > MAX_SONG_FIELD) throw new ConvexError({ code: "invalid_song" });
+      patch[key] = value.trim() || undefined;
+    }
+    if (releaseDate !== undefined) {
+      if (releaseDate && !/^\d{4}-\d{2}-\d{2}$/.test(releaseDate)) throw new ConvexError({ code: "invalid_song" });
+      patch.releaseDate = releaseDate || undefined;
+    }
+    await ctx.db.patch("songs", songId, patch);
   },
 });
 

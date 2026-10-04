@@ -55,6 +55,8 @@ export const getStory = query({
       audioUrl: story.audioUrl,
       permalink: story.permalink ?? null,
       imageUrl: story.imageUrl ?? null,
+      contentType: story.contentType,
+      song: await publishedSong(ctx, storyId, runId),
       mentions: mentions
         .filter((mention) => mention.entityType !== "place")
         .map(({ entityType, name, quote, startMs, relatedPlace }) => ({
@@ -207,3 +209,14 @@ export const askStory = query({
     return { status: "ok" as const, passages };
   },
 });
+
+/** The approved song of the published run, as Alexa may use it; a session never carries audio. */
+async function publishedSong(ctx: QueryCtx, storyId: Id<"stories">, runId: string) {
+  const song = await ctx.db.query("songs").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).first();
+  if (!song || song.reviewStatus !== "approved") return null;
+  return {
+    artist: song.artist, title: song.title ?? null, album: song.album ?? null, releaseDate: song.releaseDate ?? null,
+    credits: song.credits, releaseShow: song.releaseShow ?? null, setList: song.setList ?? null,
+    audioUrl: song.kind === "premiere" ? (song.audioUrl ?? null) : null,
+  };
+}

@@ -26,6 +26,8 @@ function stepFor(kind: JobKind): StepRef {
   switch (kind) {
     case "transcribe":
       return transcribeStep();
+    case "article":
+      return internal.articles.run;
     case "extract":
       return internal.aws.extract.run;
     case "geocode":
