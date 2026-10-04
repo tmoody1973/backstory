@@ -8,6 +8,8 @@ const crons = cronJobs();
 crons.cron("ingest This Bites", "0 12 * * *", internal.ingest.ingestShow, { showSlug: "this-bites", limit: 10 });
 crons.cron("ingest Uniquely Milwaukee", "15 12 * * *", internal.ingest.ingestShow, { showSlug: "uniquely-milwaukee", limit: 10 });
 crons.cron("ingest Ladies First", "30 12 * * *", internal.ingest.ingestShow, { showSlug: "ladies-first", limit: 10 });
+crons.cron("ingest Milwaukee Music Premiere", "45 12 * * *", internal.ingest.ingestShow, { showSlug: "milwaukee-music-premiere", limit: 10 });
+crons.cron("ingest Studio Milwaukee Sessions", "0 13 * * *", internal.ingest.ingestShow, { showSlug: "studio-milwaukee", limit: 10 });
 
 // An action that dies outside its error handler (timeout, deploy mid-run) never reports failure;
 // the sweeper sends such jobs through the normal retry → needs_editor path.
