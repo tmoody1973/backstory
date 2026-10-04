@@ -43,6 +43,8 @@ export async function refreshStorySearch(ctx: MutationCtx, storyId: Id<"stories"
 const FILLER = new Set([
   "the", "a", "an", "and", "or", "of", "in", "on", "at", "to", "for", "from", "with", "about", "that", "this", "was", "is", "it",
   "story", "stories", "episode", "show", "podcast", "radio", "milwaukee", "heard", "remember", "one", "some",
+  // How listeners ask for music ("the new Glitzy song"): the artist or title decides, not these.
+  "new", "latest", "song", "songs", "track", "single", "music",
   // Show names ("the Uniquely Milwaukee story about…"): the show is a filter, not a memory of the story.
   ...Object.values(SHOW_PROFILES).flatMap((show) => normalizeForMatch(show.name).split(" ")),
 ]);
