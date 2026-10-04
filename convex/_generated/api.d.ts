@@ -42,6 +42,7 @@ import type * as lib_placeDirectory from "../lib/placeDirectory.js";
 import type * as lib_reviewAuth from "../lib/reviewAuth.js";
 import type * as lib_reviewers from "../lib/reviewers.js";
 import type * as lib_shows from "../lib/shows.js";
+import type * as lib_song from "../lib/song.js";
 import type * as lib_speakers from "../lib/speakers.js";
 import type * as lib_steps from "../lib/steps.js";
 import type * as lib_storySearch from "../lib/storySearch.js";
@@ -96,6 +97,7 @@ declare const fullApi: ApiFromModules<{
   "lib/reviewAuth": typeof lib_reviewAuth;
   "lib/reviewers": typeof lib_reviewers;
   "lib/shows": typeof lib_shows;
+  "lib/song": typeof lib_song;
   "lib/speakers": typeof lib_speakers;
   "lib/steps": typeof lib_steps;
   "lib/storySearch": typeof lib_storySearch;

@@ -22,4 +22,6 @@ export async function approveRun(ctx: MutationCtx, storyId: Id<"stories">, runId
   for (const row of topics) if (row.reviewStatus === "pending") await ctx.db.patch("storyTopics", row._id, { reviewStatus: "approved" });
   const actions = await ctx.db.query("storyActions").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN);
   for (const row of actions) if (row.reviewStatus === "pending") await ctx.db.patch("storyActions", row._id, { reviewStatus: "approved" });
+  const songs = await ctx.db.query("songs").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).take(MAX_ROWS_PER_RUN);
+  for (const row of songs) if (row.reviewStatus === "pending") await ctx.db.patch("songs", row._id, { reviewStatus: "approved" });
 }

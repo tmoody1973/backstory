@@ -69,6 +69,7 @@ export const episode = query({
         attribution: attribution(profile.name, story.publishedAt),
       },
       speakers: await speakersFor(ctx, storyId),
+      song: await songFor(ctx, storyId, runId),
       ...(await itemsFor(ctx, storyId, runId)),
     };
   },
@@ -197,3 +198,11 @@ export const published = query({
       }));
   },
 });
+
+/** The run's song record for the review page (premieres and sessions), or null. */
+async function songFor(ctx: QueryCtx, storyId: Id<"stories">, runId: string) {
+  const song = await ctx.db.query("songs").withIndex("by_storyId_and_runId", (q) => q.eq("storyId", storyId).eq("runId", runId)).first();
+  if (!song) return null;
+  const { _id, _creationTime, storyId: _s, runId: _r, ...fields } = song;
+  return { songId: _id, ...fields, removeReason: fields.removeReason ?? null };
+}

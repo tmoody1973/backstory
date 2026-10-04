@@ -133,6 +133,23 @@ export default defineSchema({
     removeReason: v.optional(removeReasonValidator),
   }).index("by_storyId_and_runId", ["storyId", "runId"]),
 
+  // Premieres and sessions: the song (or set) the article is about. The playlist tool will match against these.
+  songs: defineTable({
+    storyId: v.id("stories"),
+    runId: v.string(),
+    kind: v.union(v.literal("premiere"), v.literal("session")),
+    artist: v.string(),
+    title: v.optional(v.string()),
+    album: v.optional(v.string()),
+    releaseDate: v.optional(v.string()), // YYYY-MM-DD
+    credits: v.array(v.object({ role: v.string(), name: v.string() })),
+    releaseShow: v.optional(v.object({ venue: v.string(), date: v.string() })),
+    setList: v.optional(v.array(v.string())),
+    audioUrl: v.optional(v.string()), // premieres only (decision 012: never a session's)
+    reviewStatus: reviewStatusValidator,
+    removeReason: v.optional(removeReasonValidator),
+  }).index("by_storyId_and_runId", ["storyId", "runId"]),
+
   storyActions: defineTable({
     storyId: v.id("stories"),
     runId: v.string(),
