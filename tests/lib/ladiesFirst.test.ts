@@ -23,7 +23,8 @@ const story = {
 describe("Ladies First", () => {
   it("is a station series of stories, not a podcast channel: the query asks for stories in its collection", () => {
     const profile = getShowProfile("ladies-first");
-    expect(profile).toMatchObject({ cdsCollectionId: "g-s921-13049", cdsProfile: "story", detailedAnswersDefault: false });
+    // Transcript check 2026-10-04 (17 episodes): no song stretches, no repeated chorus lines, 2-3 speakers each: quoting on.
+    expect(profile).toMatchObject({ cdsCollectionId: "g-s921-13049", cdsProfile: "story", detailedAnswersDefault: true });
     const url = new URL(buildShowQueryUrl(profile.cdsCollectionId, 10, profile.cdsProfile));
     expect(url.searchParams.get("profileIds")).toBe("story");
     expect(url.searchParams.get("collectionIds")).toBe("g-s921-13049");
