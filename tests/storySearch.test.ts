@@ -41,6 +41,8 @@ describe("relevantEnough", () => {
     expect(relevantEnough("the new Glitzy song", tank)).toBe(false);
     expect(relevantEnough("the new Glitzy song", glitzy)).toBe(true);
     expect(relevantEnough("latest track from Glitzy", glitzy)).toBe(true);
+    expect(relevantEnough("play the new Glitzy song", glitzy)).toBe(true);
+    expect(relevantEnough("let me hear the Glitzy premiere", glitzy)).toBe(true);
   });
   const text = "freshwater food wine festival cafe corazon bay view shop";
   it("needs at least half of the listener's meaningful words", () => {
