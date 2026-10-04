@@ -31,3 +31,12 @@ describe("checkSong: every field must be in the article", () => {
       .toEqual({ artist: "Tank & The Bangas", credits: [], setList: ["Boxes & Squares", "Move"] });
   });
 });
+
+describe("songEvidenceText", () => {
+  it("the station-written title counts as evidence (the article says 'Chris Rosenau and Nick Sanborn', the title 'Rosenau & Sanborn')", async () => {
+    const { songEvidenceText } = await import("../../convex/lib/song");
+    const text = songEvidenceText("Milwaukee Music Premiere: Rosenau & Sanborn, 'Walrus'", ["Chris Rosenau and Nick Sanborn have been in the music industry for decades."]);
+    expect(checkSong({ artist: "Rosenau & Sanborn", title: "Walrus", credits: [], releaseShow: null, setList: null }, text))
+      .toEqual({ artist: "Rosenau & Sanborn", title: "Walrus", credits: [] });
+  });
+});
