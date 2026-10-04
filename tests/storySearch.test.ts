@@ -35,6 +35,13 @@ describe("storySearchText / firstSentence", () => {
 });
 
 describe("relevantEnough", () => {
+  it("'the new Glitzy song': generic music words don't count, the artist does (live miss: it found a session that says 'new album' and 'first song')", () => {
+    const tank = "studio milwaukee session tank the bangas their new album the first song they ever wrote";
+    const glitzy = "milwaukee music premiere glitzy effort indie rock band";
+    expect(relevantEnough("the new Glitzy song", tank)).toBe(false);
+    expect(relevantEnough("the new Glitzy song", glitzy)).toBe(true);
+    expect(relevantEnough("latest track from Glitzy", glitzy)).toBe(true);
+  });
   const text = "freshwater food wine festival cafe corazon bay view shop";
   it("needs at least half of the listener's meaningful words", () => {
     expect(relevantEnough("art resale shop west allis", text)).toBe(false); // only "shop"
