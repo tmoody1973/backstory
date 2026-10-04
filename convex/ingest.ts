@@ -54,10 +54,15 @@ export const ingestEpisodes = internalAction({
   },
 });
 
-/** The show's artwork from its CDS series document; null if CDS has none. */
-async function showImage(collectionId: string, token: string): Promise<string | null> {
-  const series = (await fetchCds(buildDocumentUrl(collectionId), token)) as { resources?: Parameters<typeof seriesImageUrl>[0][] };
-  return series.resources?.[0] ? seriesImageUrl(series.resources[0]) : null;
+/** The show's artwork from its CDS series document; null if CDS has none or won't serve it (Ladies First's series is a 404). */
+export async function showImage(collectionId: string, token: string): Promise<string | null> {
+  try {
+    const series = (await fetchCds(buildDocumentUrl(collectionId), token)) as { resources?: Parameters<typeof seriesImageUrl>[0][] };
+    return series.resources?.[0] ? seriesImageUrl(series.resources[0]) : null;
+  } catch (error) {
+    console.log(`[backstory] no show artwork for ${collectionId}: ${error instanceof Error ? error.message : error}`);
+    return null;
+  }
 }
 
 /** The episode's own photo when it has one, else the show artwork. */
