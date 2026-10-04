@@ -7,11 +7,15 @@ export type PlaceCategory = (typeof PLACE_CATEGORIES)[number];
 export const ACTION_KINDS = ["visit", "reserve", "attend", "support", "remember"] as const;
 export type ActionKind = (typeof ACTION_KINDS)[number];
 
+export type CdsProfile = "podcast-episode" | "story";
+
 export interface ShowProfile {
   slug: string;
   name: string;
-  /** CDS podcast-channel collection id. */
+  /** CDS collection id: a podcast channel, or a station series. */
   cdsCollectionId: string;
+  /** What the collection holds: podcast episodes, or station stories with audio (Ladies First). */
+  cdsProfile: CdsProfile;
   entityTypes: readonly EntityType[];
   actionKinds: readonly ActionKind[];
   /** Regular hosts, used to suggest names for transcript speakers. */
@@ -24,12 +28,13 @@ export interface ShowProfile {
 }
 
 // Adding a show means adding a profile here, not changing pipeline code.
-// Ladies First and the other station podcasts are added in Plan 3.
+// The other station podcasts are added in Plan 3.
 export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
   "this-bites": {
     slug: "this-bites",
     name: "This Bites",
     cdsCollectionId: "718413877",
+    cdsProfile: "podcast-episode",
     entityTypes: ["person", "organization", "place", "event", "dish"],
     actionKinds: ["visit", "reserve", "attend"],
     hosts: ["Tarik Moody", "Ann Christenson"],
@@ -42,6 +47,7 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     slug: "uniquely-milwaukee",
     name: "Uniquely Milwaukee",
     cdsCollectionId: "718414860",
+    cdsProfile: "podcast-episode",
     entityTypes: ["person", "organization", "place", "event"],
     actionKinds: ["visit", "attend", "support", "remember"],
     hosts: ["Kim Shine"], // guest hosts are read from the show notes ("Episode host: ...")
@@ -50,6 +56,20 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     // ponytail: reviewer not yet named by the content team (PRD open question); Plan 2 needs a real one
     reviewer: "Uniquely Milwaukee producer (to confirm)",
     detailedAnswersDefault: false, // residents and participants: an editor opts each episode in
+  },
+  "ladies-first": {
+    slug: "ladies-first",
+    name: "Ladies First",
+    cdsCollectionId: "g-s921-13049",
+    cdsProfile: "story",
+    entityTypes: ["person", "organization", "place", "event"],
+    actionKinds: ["attend"],
+    hosts: ["Element Everest-Blanks"],
+    extractionNotes:
+      "Ladies First is a HYFIN interview series with women musicians. The guest artist is a person and the subject of the story; collaborators, bandmates, producers and family members she names are people too. Record labels, bands and groups are organizations. Places are where the story happens or where she comes from, especially any Milwaukee connection; a concert venue is a venue. A tour stop or show is an event. Albums and songs belong in the summary, never as separate mentions. The episode plays clips of her songs: never use sung lyrics as a quote, evidence or fact; quote only spoken conversation. Attend actions are for upcoming shows named in the episode.",
+    // ponytail: reviewer not yet named (PRD open question)
+    reviewer: "Ladies First producer (to confirm)",
+    detailedAnswersDefault: false, // song clips in the audio: off until a transcript check shows lyrics stay out of quotes
   },
 };
 

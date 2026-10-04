@@ -17,7 +17,8 @@ export interface CdsDocument {
   teaser?: string;
   publishDateTime: string;
   audio?: CdsLink[];
-  assets?: Record<string, CdsAudioAsset>;
+  images?: CdsLink[];
+  assets?: Record<string, CdsAudioAsset & { enclosures?: ImageEnclosure[] }>;
   webPages?: CdsLink[];
 }
 
@@ -29,13 +30,15 @@ export interface CdsEpisode {
   audioUrl: string;
   durationSec: number;
   permalink?: string;
+  /** The episode's own photo (station stories have one; podcast episodes use the show artwork). */
+  imageUrl?: string;
 }
 
 /** Always sort explicitly: without it CDS returned oldest first, despite its docs. */
-export function buildShowQueryUrl(collectionId: string, limit: number): string {
+export function buildShowQueryUrl(collectionId: string, limit: number, profileId: "podcast-episode" | "story" = "podcast-episode"): string {
   const params = new URLSearchParams({
     collectionIds: collectionId,
-    profileIds: "podcast-episode",
+    profileIds: profileId,
     sort: "publishDateTime:desc",
     limit: String(limit),
   });
@@ -65,6 +68,8 @@ export function parseEpisode(doc: CdsDocument): CdsEpisode | null {
   const enclosure = asset?.enclosures?.find((e) => e.type === "audio/mpeg") ?? asset?.enclosures?.[0];
   if (!enclosure) return null;
   const permalink = doc.webPages?.find((page) => page.rels?.includes("canonical"))?.href;
+  const imageId = doc.images?.[0]?.href.replace("#/assets/", "");
+  const imageUrl = imageId && doc.assets?.[imageId] ? seriesImageUrl({ assets: { [imageId]: doc.assets[imageId] } }) : null;
   return {
     cdsId: doc.id,
     title: doc.title,
@@ -73,6 +78,7 @@ export function parseEpisode(doc: CdsDocument): CdsEpisode | null {
     audioUrl: enclosure.href,
     durationSec: asset?.duration ?? 0,
     ...(permalink ? { permalink } : {}),
+    ...(imageUrl ? { imageUrl } : {}),
   };
 }
 

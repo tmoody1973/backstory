@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
-import { buildDocumentUrl, buildShowQueryUrl, fetchCds, parseEpisode, seriesImageUrl, type CdsDocument } from "./lib/cds";
+import { buildDocumentUrl, buildShowQueryUrl, fetchCds, parseEpisode, seriesImageUrl, type CdsDocument, type CdsEpisode } from "./lib/cds";
 import { getShowProfile } from "./lib/shows";
 
 export const ingestShow = internalAction({
@@ -11,17 +11,18 @@ export const ingestShow = internalAction({
     const token = process.env.NPR_CDS_TOKEN;
     if (!token) throw new Error("Missing Convex env var NPR_CDS_TOKEN");
     const imageUrl = await showImage(profile.cdsCollectionId, token);
-    const body = (await fetchCds(buildShowQueryUrl(profile.cdsCollectionId, limit ?? 10), token)) as {
+    const body = (await fetchCds(buildShowQueryUrl(profile.cdsCollectionId, limit ?? 10, profile.cdsProfile), token)) as {
       resources?: CdsDocument[];
     };
     let created = 0;
     for (const doc of body.resources ?? []) {
       const episode = parseEpisode(doc);
       if (!episode) continue;
-      const result = await ctx.runMutation(internal.stories.upsertEpisode, { showSlug, ...episode, ...(imageUrl ? { imageUrl } : {}) });
+      const result = await ctx.runMutation(internal.stories.upsertEpisode, { showSlug, ...withImage(episode, imageUrl) });
       if (result.created) created++;
     }
-    if (imageUrl) await ctx.runMutation(internal.stories.setShowImage, { showSlug, imageUrl });
+    // Station stories (Ladies First) keep their own photos; the show artwork only backfills podcast shows.
+    if (imageUrl && profile.cdsProfile === "podcast-episode") await ctx.runMutation(internal.stories.setShowImage, { showSlug, imageUrl });
     console.log(`[backstory] ingest ${showSlug}: ${body.resources?.length ?? 0} documents, ${created} new`);
     return { created };
   },
@@ -46,7 +47,7 @@ export const ingestEpisodes = internalAction({
         console.log(`[backstory] ingest ${cdsId}: no audio, skipped`);
         continue;
       }
-      const result = await ctx.runMutation(internal.stories.upsertEpisode, { showSlug, ...episode, ...(imageUrl ? { imageUrl } : {}) });
+      const result = await ctx.runMutation(internal.stories.upsertEpisode, { showSlug, ...withImage(episode, imageUrl) });
       if (result.created) created++;
     }
     return { created };
@@ -57,4 +58,10 @@ export const ingestEpisodes = internalAction({
 async function showImage(collectionId: string, token: string): Promise<string | null> {
   const series = (await fetchCds(buildDocumentUrl(collectionId), token)) as { resources?: Parameters<typeof seriesImageUrl>[0][] };
   return series.resources?.[0] ? seriesImageUrl(series.resources[0]) : null;
+}
+
+/** The episode's own photo when it has one, else the show artwork. */
+function withImage(episode: CdsEpisode, showImageUrl: string | null): CdsEpisode {
+  const imageUrl = episode.imageUrl ?? showImageUrl ?? undefined;
+  return imageUrl ? { ...episode, imageUrl } : episode;
 }
