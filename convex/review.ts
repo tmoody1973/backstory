@@ -174,3 +174,26 @@ export const places = query({
     return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name));
   },
 });
+
+const PUBLISHED_LIMIT = 300;
+
+/** Published episodes, newest first: a way back to any episode's review page after it leaves the queue. */
+export const published = query({
+  args: { showSlug: v.optional(v.string()) },
+  handler: async (ctx, { showSlug }) => {
+    await requireReviewer(ctx);
+    const stories = await ctx.db
+      .query("stories")
+      .withIndex("by_reviewStatus_and_publishedAt", (q) => q.eq("reviewStatus", "approved"))
+      .order("desc")
+      .take(PUBLISHED_LIMIT);
+    return stories
+      .filter((story) => story.approvedRunId && (!showSlug || story.showSlug === showSlug))
+      .map((story) => ({
+        storyId: story._id, title: story.title, showSlug: story.showSlug, showName: getShowProfile(story.showSlug).name,
+        publishedAt: story.publishedAt, doNotUse: story.doNotUse,
+        // Re-processed since publishing: the live version stays until an editor approves the new one.
+        newVersionWaiting: story.latestRunId !== story.approvedRunId,
+      }));
+  },
+});
