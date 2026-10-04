@@ -27,3 +27,8 @@ export function pickDetails(name: string, items: Item[]): { phone?: string; webs
     openingHours: match.OpeningHours?.[0]?.Display?.join("; ") || undefined,
   };
 }
+
+/** What "Fetch details" asks Amazon, in order: the name alone near the pin (an address in the text makes Amazon return the address, not the business), then name and address. */
+export function detailQueries(place: { name: string; address: string | null }): string[] {
+  return [place.name, place.address ? `${place.name}, ${place.address}` : `${place.name}, Milwaukee, WI`];
+}

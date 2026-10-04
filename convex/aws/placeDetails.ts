@@ -4,7 +4,7 @@ import { GeoPlacesClient, SearchTextCommand } from "@aws-sdk/client-geo-places";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
-import { pickDetails } from "../lib/placeDetails";
+import { detailQueries, pickDetails } from "../lib/placeDetails";
 import { requireReviewer } from "../lib/reviewAuth";
 
 /**
@@ -18,17 +18,21 @@ export const run = action({
     const place = await ctx.runQuery(internal.reviewMutations.placeForDetails, { key });
     if (!place) throw new ConvexError({ code: "no_pin" });
     const client = new GeoPlacesClient({ region: process.env.AWS_REGION });
-    const response = await client.send(
-      new SearchTextCommand({
-        QueryText: place.address ? `${place.name}, ${place.address}` : `${place.name}, Milwaukee, WI`,
-        BiasPosition: [place.lng, place.lat],
-        Filter: { IncludeCountries: ["USA"] },
-        MaxResults: 3,
-        AdditionalFeatures: ["Contact"],
-        IntendedUse: "Storage", // we keep what comes back, which this pricing tier allows
-      }),
-    );
-    const details = pickDetails(place.name, response.ResultItems ?? []);
+    let details: ReturnType<typeof pickDetails> = null;
+    for (const query of detailQueries(place)) {
+      const response = await client.send(
+        new SearchTextCommand({
+          QueryText: query,
+          BiasPosition: [place.lng, place.lat],
+          Filter: { IncludeCountries: ["USA"] },
+          MaxResults: 3,
+          AdditionalFeatures: ["Contact"],
+          IntendedUse: "Storage", // we keep what comes back, which this pricing tier allows
+        }),
+      );
+      details = pickDetails(place.name, response.ResultItems ?? []);
+      if (details) break;
+    }
     if (!details) throw new ConvexError({ code: "no_details" });
     await ctx.runMutation(internal.reviewMutations.saveDetails, { key, ...details });
     return { phone: details.phone ?? null, website: details.website ?? null, openingHours: details.openingHours ?? null };

@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, mutation, type MutationCtx } from "./_generated/server";
 import { approveRun } from "./lib/approveRun";
+import { validReservationUrl } from "./lib/bookingLink";
 import { livePlaceRows, placeKey } from "./lib/placeDirectory";
 import { normalizeForMatch } from "./lib/evidence";
 import { requireReviewer } from "./lib/reviewAuth";
@@ -109,19 +110,6 @@ export const setPlaceNeighborhood = mutation({
 });
 
 // Booking sites a Reserve button may open; anything else could send a listener somewhere unexpected.
-const BOOKING_HOSTS = ["opentable.com", "resy.com", "exploretock.com", "sevenrooms.com"];
-const MAX_URL = 500;
-
-/** A reservation page on a known booking site, over https; null clears it. */
-export function validReservationUrl(url: string): boolean {
-  if (url.length > MAX_URL) return false;
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "https:" && BOOKING_HOSTS.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
-  } catch {
-    return false;
-  }
-}
 
 /** One place, every published episode: neighborhood and/or reservation link (a field left out stays as it is; null clears). */
 export const setPlaceDetails = mutation({
@@ -170,6 +158,15 @@ export const placeForDetails = internalQuery({
   handler: async (ctx, { key }) => {
     const pinned = (await livePlaceRows(ctx)).map(({ place }) => place).find((p) => placeKey(p) === key && p.lat !== undefined && p.lng !== undefined);
     return pinned ? { name: pinned.officialName ?? pinned.name, address: pinned.geocodeLabel ?? null, lat: pinned.lat!, lng: pinned.lng! } : null;
+  },
+});
+
+/** The name "Find booking link" searches for: any live copy of the place, pinned or not. */
+export const placeNameForKey = internalQuery({
+  args: { key: v.string() },
+  handler: async (ctx, { key }) => {
+    const place = (await livePlaceRows(ctx)).map(({ place }) => place).find((p) => placeKey(p) === key);
+    return place ? (place.officialName ?? place.name) : null;
   },
 });
 
