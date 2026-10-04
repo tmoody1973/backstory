@@ -43,18 +43,20 @@ export const extractionSchema = z.object({
 });
 
 /**
- * Keeps the first items up to each cap. A model that lists 45 mentions should lose the last 5,
- * not the whole episode (at temperature 0 a retry would overflow the same way).
+ * Drops items whose type, topic or kind isn't one Backstory keeps, then keeps the first items up to each cap. An invented
+ * value ("album", a topic outside the taxonomy) or a 45th mention should lose that item, not the whole episode (at
+ * temperature 0 a retry makes the same choice).
  */
 export function trimToCaps(raw: unknown): unknown {
   if (typeof raw !== "object" || raw === null) return raw;
-  const cap = (value: unknown, max: number) => (Array.isArray(value) ? value.slice(0, max) : value);
+  const keep = (value: unknown, field: string, allowed: readonly string[], max: number) =>
+    Array.isArray(value) ? value.filter((item) => allowed.includes((item as Record<string, unknown>)?.[field] as string)).slice(0, max) : value;
   const output = raw as Record<string, unknown>;
   return {
     ...output,
-    mentions: cap(output.mentions, MAX_MENTIONS),
-    topics: cap(output.topics, MAX_TOPICS),
-    actions: cap(output.actions, MAX_ACTIONS),
+    mentions: keep(output.mentions, "entityType", ENTITY_TYPES, MAX_MENTIONS),
+    topics: keep(output.topics, "topic", TOPIC_VALUES, MAX_TOPICS),
+    actions: keep(output.actions, "kind", ACTION_KINDS, MAX_ACTIONS),
   };
 }
 
