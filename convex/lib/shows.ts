@@ -1,4 +1,4 @@
-export const ENTITY_TYPES = ["person", "organization", "place", "event", "dish"] as const;
+export const ENTITY_TYPES = ["person", "organization", "place", "event", "dish", "artist"] as const;
 export type EntityType = (typeof ENTITY_TYPES)[number];
 
 export const PLACE_CATEGORIES = ["restaurant", "bar", "venue", "park", "organization"] as const;
@@ -68,11 +68,11 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     cdsCollectionId: "g-s921-13049",
     cdsProfile: "story",
     contentType: "episode",
-    entityTypes: ["person", "organization", "place", "event"],
+    entityTypes: ["artist", "person", "organization", "place", "event"],
     actionKinds: ["attend"],
     hosts: ["Element Everest-Blanks"],
     extractionNotes:
-      "Ladies First is a HYFIN interview series with women musicians. The guest artist is a person and the subject of the story; collaborators, bandmates, producers and family members she names are people too. Record labels, bands and groups are organizations. Places are where the story happens or where she comes from, especially any Milwaukee connection; a concert venue is a venue. A tour stop or show is an event. Albums and songs belong in the summary, never as separate mentions. The episode plays clips of her songs: never use sung lyrics as a quote, evidence or fact; quote only spoken conversation. Attend actions are for upcoming shows named in the episode.",
+      "Ladies First is a HYFIN interview series with women musicians. The guest is an artist and the subject of the story. Musicians, singers, rappers, DJs, bands and groups who make music are artist (never person or organization); producers who aren't performers and family members are people. Record labels are organizations. Places are where the story happens or where she comes from, especially any Milwaukee connection; a concert venue is a venue. A tour stop or show is an event. Albums and songs belong in the summary, never as separate mentions. The episode plays clips of her songs: never use sung lyrics as a quote, evidence or fact; quote only spoken conversation. Attend actions are for upcoming shows named in the episode.",
     // ponytail: reviewer not yet named (PRD open question)
     reviewer: "Ladies First producer (to confirm)",
     // Public artists and the host; a 17-episode transcript check (2026-10-04) found conversation, not sung lyrics.
@@ -84,11 +84,11 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     cdsCollectionId: "1197908043",
     cdsProfile: "story",
     contentType: "premiere",
-    entityTypes: ["person", "organization", "place", "event"],
+    entityTypes: ["artist", "person", "organization", "place", "event"],
     actionKinds: ["attend"],
     hosts: [],
     extractionNotes:
-      "A Milwaukee Music Premiere: Radio Milwaukee debuts one local artist's song. Fill the song record: artist, song title, album, release date, credits (who recorded, mixed, mastered, produced), and the release show (venue and date) if named. People are the artist's members and collaborators; the release show is an event at a venue. Never quote or paraphrase song lyrics.",
+      "A Milwaukee Music Premiere: Radio Milwaukee debuts one local artist's song. Fill the song record: artist, song title, album, release date, credits (who recorded, mixed, mastered, produced), and the release show (venue and date) if named. Musicians, bands and groups who make music are artist (never person or organization), including the premiering artist and anyone on the release show bill; engineers, producers and other non-performers are people. The release show is an event at a venue. Never quote or paraphrase song lyrics.",
     // ponytail: reviewer not yet named (spec open question)
     reviewer: "Milwaukee Music Premiere editor (to confirm)",
     detailedAnswersDefault: true, // station-written article about a public artist
@@ -99,11 +99,11 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     cdsCollectionId: "g-s921-1635",
     cdsProfile: "story",
     contentType: "session",
-    entityTypes: ["person", "organization", "place", "event"],
+    entityTypes: ["artist", "person", "organization", "place", "event"],
     actionKinds: ["attend"],
     hosts: [],
     extractionNotes:
-      "A Studio Milwaukee Session write-up: a touring or local artist performed live at Radio Milwaukee. Fill the song record with the artist and the set list (song titles in order). The interviewer and the artist are people; the concert they played that day is an event. Never quote or paraphrase song lyrics.",
+      "A Studio Milwaukee Session write-up: a touring or local artist performed live at Radio Milwaukee. Fill the song record with the artist and the set list (song titles in order). The performing musicians and bands are artist (never person or organization); the interviewer is a person; the concert they played that day is an event. Never quote or paraphrase song lyrics.",
     // ponytail: reviewer not yet named (spec open question)
     reviewer: "Studio Milwaukee producer (to confirm)",
     detailedAnswersDefault: true, // station-written article about a public artist
