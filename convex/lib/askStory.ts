@@ -56,11 +56,18 @@ const NAME_STOP = new Set([
 const ASKING_WORDS = new Set([
   "what", "did", "does", "do", "they", "say", "says", "said", "talk", "talked", "talking", "mention", "mentioned", "tell", "told",
   "which", "who", "when", "where", "how", "there", "their", "he", "she", "we", "you", "me", "us", "host", "hosts", "part",
+  "discuss", "discussed", "discussing", "discussion", "think", "thinks", "thought", "review", "reviewed", "opinion",
+  "details", "detail", "more", "about", "of", "the", "a", "an",
   ...Object.values(SHOW_PROFILES).flatMap((show) => show.hosts.flatMap((host) => normalizeForMatch(host).split(" "))),
 ]);
 
+// "Tsunami restaurant": the name finds the passage; the kind of place only narrows it away (the line says "El Tsunami").
+const GENERIC_PLACES = new Set(["restaurant", "restaurants", "place", "places", "spot", "spots", "bar", "bars", "cafe", "cafes", "shop", "shops"]);
+
 export function detailWords(question: string): string {
-  return normalizeForMatch(question).split(" ").filter((word) => word && !ASKING_WORDS.has(word)).join(" ");
+  const words = normalizeForMatch(question).split(" ").filter((word) => word && !ASKING_WORDS.has(word));
+  const specific = words.filter((word) => !GENERIC_PLACES.has(word));
+  return (specific.length > 0 ? specific : words).join(" ");
 }
 
 const MAX_ROWS_PER_RUN = 200;
