@@ -9,6 +9,7 @@
  */
 
 import type * as admin from "../admin.js";
+import type * as articles from "../articles.js";
 import type * as aws_extract from "../aws/extract.js";
 import type * as aws_geocode from "../aws/geocode.js";
 import type * as aws_pinLocation from "../aws/pinLocation.js";
@@ -24,6 +25,7 @@ import type * as jevPeople from "../jevPeople.js";
 import type * as jevTopics from "../jevTopics.js";
 import type * as jobs from "../jobs.js";
 import type * as lib_approveRun from "../lib/approveRun.js";
+import type * as lib_article from "../lib/article.js";
 import type * as lib_askStory from "../lib/askStory.js";
 import type * as lib_attention from "../lib/attention.js";
 import type * as lib_attribution from "../lib/attribution.js";
@@ -61,6 +63,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  articles: typeof articles;
   "aws/extract": typeof aws_extract;
   "aws/geocode": typeof aws_geocode;
   "aws/pinLocation": typeof aws_pinLocation;
@@ -76,6 +79,7 @@ declare const fullApi: ApiFromModules<{
   jevTopics: typeof jevTopics;
   jobs: typeof jobs;
   "lib/approveRun": typeof lib_approveRun;
+  "lib/article": typeof lib_article;
   "lib/askStory": typeof lib_askStory;
   "lib/attention": typeof lib_attention;
   "lib/attribution": typeof lib_attribution;

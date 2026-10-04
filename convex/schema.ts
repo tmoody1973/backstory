@@ -24,7 +24,8 @@ export const stageValidator = v.union(
   v.literal("ingested"), v.literal("transcribing"), v.literal("transcribed"),
   v.literal("extracted"), v.literal("geocoded"), v.literal("needs_editor"),
 );
-export const jobKindValidator = v.union(v.literal("transcribe"), v.literal("extract"), v.literal("geocode"));
+export const jobKindValidator = v.union(v.literal("transcribe"), v.literal("article"), v.literal("extract"), v.literal("geocode"));
+export const contentTypeValidator = v.union(v.literal("episode"), v.literal("premiere"), v.literal("session"));
 export const jobStatusValidator = v.union(
   v.literal("queued"), v.literal("running"), v.literal("retrying"), v.literal("done"), v.literal("needs_editor"),
 );
@@ -35,7 +36,7 @@ export default defineSchema({
   stories: defineTable({
     cdsId: v.string(),
     showSlug: v.string(),
-    contentType: v.literal("episode"), // Plan 4 widens this for premieres, picks and sessions
+    contentType: contentTypeValidator, // premieres and sessions are read from their articles, not transcribed
     title: v.string(),
     teaserText: v.string(), // CDS show notes: spelling hints for the model, never evidence
     publishedAt: v.number(),

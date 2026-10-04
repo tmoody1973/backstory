@@ -1,3 +1,5 @@
+import { internal } from "./_generated/api";
+import { getShowProfile } from "./lib/shows";
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import { enqueue, transcribeStep } from "./jobs";
@@ -27,10 +29,13 @@ export const upsertEpisode = internalMutation({
       });
       return { storyId: existing._id, created: false };
     }
+    const profile = getShowProfile(episode.showSlug);
     const storyId = await ctx.db.insert("stories", {
       searchText: "", // filled when an editor publishes the story
       ...episode,
-      contentType: "episode",
+      // Decision 012: a session's audio is never kept, fetched or played.
+      ...(profile.contentType === "session" ? { audioUrl: "" } : {}),
+      contentType: profile.contentType,
       stage: "ingested",
       reviewStatus: "pending",
       doNotUse: false,
@@ -38,7 +43,8 @@ export const upsertEpisode = internalMutation({
     await ctx.db.insert("sources", {
       storyId, kind: "cds_document", ref: buildDocumentUrl(episode.cdsId), fetchedAt: Date.now(),
     });
-    await enqueue(ctx, "transcribe", storyId, transcribeStep());
+    if (profile.contentType === "episode") await enqueue(ctx, "transcribe", storyId, transcribeStep());
+    else await enqueue(ctx, "article", storyId, internal.articles.run);
     return { storyId, created: true };
   },
 });

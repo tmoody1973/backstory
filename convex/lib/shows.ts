@@ -8,6 +8,7 @@ export const ACTION_KINDS = ["visit", "reserve", "attend", "support", "remember"
 export type ActionKind = (typeof ACTION_KINDS)[number];
 
 export type CdsProfile = "podcast-episode" | "story";
+export type ContentType = "episode" | "premiere" | "session";
 
 export interface ShowProfile {
   slug: string;
@@ -16,6 +17,8 @@ export interface ShowProfile {
   cdsCollectionId: string;
   /** What the collection holds: podcast episodes, or station stories with audio (Ladies First). */
   cdsProfile: CdsProfile;
+  /** Episodes are transcribed; premieres and sessions are read from their article text. */
+  contentType: ContentType;
   entityTypes: readonly EntityType[];
   actionKinds: readonly ActionKind[];
   /** Regular hosts, used to suggest names for transcript speakers. */
@@ -35,6 +38,7 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     name: "This Bites",
     cdsCollectionId: "718413877",
     cdsProfile: "podcast-episode",
+    contentType: "episode",
     entityTypes: ["person", "organization", "place", "event", "dish"],
     actionKinds: ["visit", "reserve", "attend"],
     hosts: ["Tarik Moody", "Ann Christenson"],
@@ -48,6 +52,7 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     name: "Uniquely Milwaukee",
     cdsCollectionId: "718414860",
     cdsProfile: "podcast-episode",
+    contentType: "episode",
     entityTypes: ["person", "organization", "place", "event"],
     actionKinds: ["visit", "attend", "support", "remember"],
     hosts: ["Kim Shine"], // guest hosts are read from the show notes ("Episode host: ...")
@@ -62,6 +67,7 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     name: "Ladies First",
     cdsCollectionId: "g-s921-13049",
     cdsProfile: "story",
+    contentType: "episode",
     entityTypes: ["person", "organization", "place", "event"],
     actionKinds: ["attend"],
     hosts: ["Element Everest-Blanks"],
@@ -71,6 +77,36 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     reviewer: "Ladies First producer (to confirm)",
     // Public artists and the host; a 17-episode transcript check (2026-10-04) found conversation, not sung lyrics.
     detailedAnswersDefault: true,
+  },
+  "milwaukee-music-premiere": {
+    slug: "milwaukee-music-premiere",
+    name: "Milwaukee Music Premiere",
+    cdsCollectionId: "1197908043",
+    cdsProfile: "story",
+    contentType: "premiere",
+    entityTypes: ["person", "organization", "place", "event"],
+    actionKinds: ["attend"],
+    hosts: [],
+    extractionNotes:
+      "A Milwaukee Music Premiere: Radio Milwaukee debuts one local artist's song. Fill the song record: artist, song title, album, release date, credits (who recorded, mixed, mastered, produced), and the release show (venue and date) if named. People are the artist's members and collaborators; the release show is an event at a venue. Never quote or paraphrase song lyrics.",
+    // ponytail: reviewer not yet named (spec open question)
+    reviewer: "Milwaukee Music Premiere editor (to confirm)",
+    detailedAnswersDefault: true, // station-written article about a public artist
+  },
+  "studio-milwaukee": {
+    slug: "studio-milwaukee",
+    name: "Studio Milwaukee Sessions",
+    cdsCollectionId: "g-s921-1635",
+    cdsProfile: "story",
+    contentType: "session",
+    entityTypes: ["person", "organization", "place", "event"],
+    actionKinds: ["attend"],
+    hosts: [],
+    extractionNotes:
+      "A Studio Milwaukee Session write-up: a touring or local artist performed live at Radio Milwaukee. Fill the song record with the artist and the set list (song titles in order). The interviewer and the artist are people; the concert they played that day is an event. Never quote or paraphrase song lyrics.",
+    // ponytail: reviewer not yet named (spec open question)
+    reviewer: "Studio Milwaukee producer (to confirm)",
+    detailedAnswersDefault: true, // station-written article about a public artist
   },
 };
 
