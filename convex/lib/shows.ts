@@ -69,7 +69,8 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
       "Ladies First is a HYFIN interview series with women musicians. The guest artist is a person and the subject of the story; collaborators, bandmates, producers and family members she names are people too. Record labels, bands and groups are organizations. Places are where the story happens or where she comes from, especially any Milwaukee connection; a concert venue is a venue. A tour stop or show is an event. Albums and songs belong in the summary, never as separate mentions. The episode plays clips of her songs: never use sung lyrics as a quote, evidence or fact; quote only spoken conversation. Attend actions are for upcoming shows named in the episode.",
     // ponytail: reviewer not yet named (PRD open question)
     reviewer: "Ladies First producer (to confirm)",
-    detailedAnswersDefault: false, // song clips in the audio: off until a transcript check shows lyrics stay out of quotes
+    // Public artists and the host; a 17-episode transcript check (2026-10-04) found conversation, not sung lyrics.
+    detailedAnswersDefault: true,
   },
 };
 
