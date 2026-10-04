@@ -61,7 +61,7 @@ export const episode = query({
     return {
       story: {
         storyId, title: story.title, showSlug: story.showSlug, showName: profile.name, reviewer: profile.reviewer,
-        publishedAt: story.publishedAt, audioUrl: story.audioUrl, permalink: story.permalink ?? null, stage: story.stage,
+        contentType: story.contentType, publishedAt: story.publishedAt, audioUrl: story.audioUrl, permalink: story.permalink ?? null, stage: story.stage,
         reviewStatus: story.reviewStatus, doNotUse: story.doNotUse, proposedSummary: story.proposedSummary ?? "",
         allowDetailedAnswers: allowsDetailedAnswers(story, profile), detailedAnswersDefault: profile.detailedAnswersDefault,
         summary: story.summary ?? null, latestRunId: runId, approvedRunId: story.approvedRunId ?? null,

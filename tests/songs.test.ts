@@ -52,6 +52,7 @@ describe("song records", () => {
     const reviewer = t.withIdentity(REVIEWER);
     const ep = await reviewer.query(api.review.episode, { storyId });
     expect(ep?.song).toMatchObject({ artist: "Glitzy", title: "Effort", reviewStatus: "pending" });
+    expect(ep?.story.contentType).toBe("premiere");
     await reviewer.mutation(api.reviewMutations.setSongFields, { songId: ep!.song!.songId as Id<"songs">, album: "Say Sorry/You're Right" });
     await expect(reviewer.mutation(api.reviewMutations.setSongFields, { songId: ep!.song!.songId as Id<"songs">, releaseDate: "next week" })).rejects.toThrow(/invalid_song/);
     await expect(t.mutation(api.reviewMutations.setSongFields, { songId: ep!.song!.songId as Id<"songs">, album: "x" })).rejects.toThrow(/not_signed_in/);
