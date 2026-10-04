@@ -46,9 +46,9 @@ The station's music coverage on radiomilwaukee.org is mostly text already in CDS
 
 ### Why premieres matter most
 
-Premieres close the biggest data gap in the music pillar: **local artists missing from MusicBrainz and Discogs.** Each premiere is a station-written record of a local track, with credits, album, release date, and the artist's own description. The engine writes those as sourced facts on the track, so when the song airs on 88Nine, song recall and the track story already have everything they need.
+Premieres close the biggest data gap in the music pillar: **local artists missing from MusicBrainz and Discogs.** Each premiere is a station-written record of a local track, with credits, album, release date, and the artist's own description. It is stored as a story like any other article, so "tell me about Glitzy" finds it through the normal story search.
 
-The premiere article also lists the song's on-air debut times (for Glitzy: 6:30 and 10:30 a.m., 2:30 and 6:30 p.m.), which matches the playlist spins and confirms the link between the article and the track.
+**Premieres are stories, not playlist data** (rm-playlist-v2 decision 007, 2026-10-04). An earlier draft had premieres write facts into the playlist's track records, so that song recall would surface the premiere when the song aired. A premiered song gets only a handful of debut-day spins, so that link would almost never fire, and it would need a shared matching key kept identical in two repos. It is not built. The playlist API still returns a `matchKey`, so the link can be added later if premieres start getting real rotation.
 
 ### Concert Picks are the station's editorial picks
 
@@ -212,9 +212,9 @@ These tables are already defined in the shared Convex schema (`convex/schema.ts`
 - `stories` gains a `contentType`: episode, short, article, premiere, concert picks, or session.
 - A new `audioAssets` table holds playable audio separately from transcripts: kind (episode, song, session), URL, duration, and a `rightsConfirmed` flag. Only confirmed assets are playable.
 - A new `editorialPicks` table holds each Concert Picks entry: artist, venue, date, the station's one-line reason, the Field Guide event ID, the source article, and an expiry date.
-- Premieres also write to the music pillar: they create or update the local track and artist, and add sourced `facts` (credits, album, release date) using the same evidence rule. This is the one place the story engine writes outside the story tables.
+- Premiere credits, album, and release date are stored on the story, using the same evidence rule as every other extracted fact. The story engine does not write outside its own tables (decision 007).
 
-**New MCP reads:** `station_picks` reads current, approved `editorialPicks`; `get_track_story` picks up premiere facts automatically; on Echo Show, a premiere's song plays from `audioAssets` inside an MCP App.
+**New MCP reads:** `station_picks` reads current, approved `editorialPicks`; premieres are found through the existing story search, like any article; on Echo Show, a premiere's song plays from `audioAssets` inside an MCP App.
 
 ## Editor review workflow
 
@@ -234,7 +234,7 @@ One review screen per episode, designed to take under 10 minutes; nothing is rea
 
 **Reviewers by show:** each show profile names its reviewer, usually the show's own producer or host, who already knows every place and person mentioned. That keeps review fast as more shows are added.
 
-**Music coverage review:** the digital content team reviews premieres and Concert Picks. For premieres, the reviewer confirms the track and artist match and the audio rights; for picks, each Field Guide event match.
+**Music coverage review:** the digital content team reviews premieres and Concert Picks. For premieres, the reviewer confirms the extracted credits and the audio rights; for picks, each Field Guide event match.
 
 ## Model choice and evaluation
 
