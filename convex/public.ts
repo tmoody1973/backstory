@@ -254,6 +254,11 @@ export const storyForPage = query({
       .filter((s) => s.showSlug === show && Math.abs(s.publishedAt - at) <= PAGE_DAYS_MS)
       .filter((s) => { const title = ` ${normalizeForMatch(s.title)} `; return words.every((w) => title.includes(` ${w} `)); })
       .sort((a, b) => Math.abs(a.publishedAt - at) - Math.abs(b.publishedAt - at));
-    return candidates[0] ? { storyId: candidates[0]._id, title: candidates[0].title } : null;
+    if (candidates[0]) return { storyId: candidates[0]._id, title: candidates[0].title };
+    // Titles and addresses are written separately ("art-resale-shop" vs "…at 414 Art Revival"): the show's only
+    // published episode on that Milwaukee date is the page; two that day is unsure, so none.
+    const chicagoDay = (ms: number) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(ms);
+    const sameDay = published.filter((s) => s.showSlug === show && chicagoDay(s.publishedAt) === date);
+    return sameDay.length === 1 ? { storyId: sameDay[0]._id, title: sameDay[0].title } : null;
   },
 });
