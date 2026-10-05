@@ -55,6 +55,14 @@ describe("storyForPage", () => {
     expect(await t.query(api.public.storyForPage, { url })).toBeNull(); // two that day: unsure, so none
   });
 
+  it("the same-day fallback counts episodes still in review: one published + one unpublished that day is unsure, so none", async () => {
+    const t = makeTest();
+    const url = "https://radiomilwaukee.org/podcast/uniquely-milwaukee/2026-09-29/art-resale-shop-milwaukee";
+    await story(t, { showSlug: "uniquely-milwaukee", title: "A different published story", publishedAt: Date.UTC(2026, 8, 29, 14) });
+    await story(t, { showSlug: "uniquely-milwaukee", title: "Creativity is sustainable, accessible at 414 Art Revival", publishedAt: Date.UTC(2026, 8, 29, 16) }, false);
+    expect(await t.query(api.public.storyForPage, { url })).toBeNull();
+  });
+
   it("a story more than two days from the address's date is not it", async () => {
     const t = makeTest();
     await story(t, { showSlug: "uniquely-milwaukee", title: "My Way Out returns", publishedAt: day(20) });

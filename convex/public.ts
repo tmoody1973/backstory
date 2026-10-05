@@ -258,7 +258,12 @@ export const storyForPage = query({
     // Titles and addresses are written separately ("art-resale-shop" vs "…at 414 Art Revival"): the show's only
     // published episode on that Milwaukee date is the page; two that day is unsure, so none.
     const chicagoDay = (ms: number) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(ms);
-    const sameDay = published.filter((s) => s.showSlug === show && chicagoDay(s.publishedAt) === date);
-    return sameDay.length === 1 ? { storyId: sameDay[0]._id, title: sameDay[0].title } : null;
+    // Count every episode of the show that day, published or still in review: one published + one in review is unsure.
+    const nearby = await ctx.db.query("stories")
+      .withIndex("by_showSlug_and_publishedAt", (q) => q.eq("showSlug", show).gte("publishedAt", at - PAGE_DAYS_MS).lte("publishedAt", at + PAGE_DAYS_MS))
+      .take(50);
+    const sameDay = nearby.filter((s) => chicagoDay(s.publishedAt) === date);
+    const only = sameDay.length === 1 ? published.find((s) => s._id === sameDay[0]._id) : undefined;
+    return only ? { storyId: only._id, title: only.title } : null;
   },
 });
