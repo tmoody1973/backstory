@@ -46,6 +46,15 @@ describe("storyForPage", () => {
     expect(await t.query(api.public.storyForPage, { url: `https://radiomilwaukee.org/${"x".repeat(600)}` })).toBeNull();
   });
 
+  it("title words don't match but it's the show's only episode that Milwaukee day: that's it (live: 'art-resale-shop' vs '414 Art Revival')", async () => {
+    const t = makeTest();
+    const url = "https://radiomilwaukee.org/podcast/uniquely-milwaukee/2026-09-29/art-resale-shop-milwaukee";
+    const art = await story(t, { showSlug: "uniquely-milwaukee", title: "Creativity is sustainable, accessible at 414 Art Revival", publishedAt: Date.UTC(2026, 8, 29, 16) });
+    expect(await t.query(api.public.storyForPage, { url })).toEqual({ storyId: art, title: "Creativity is sustainable, accessible at 414 Art Revival" });
+    await story(t, { showSlug: "uniquely-milwaukee", title: "Another story that day", publishedAt: Date.UTC(2026, 8, 29, 20) });
+    expect(await t.query(api.public.storyForPage, { url })).toBeNull(); // two that day: unsure, so none
+  });
+
   it("a story more than two days from the address's date is not it", async () => {
     const t = makeTest();
     await story(t, { showSlug: "uniquely-milwaukee", title: "My Way Out returns", publishedAt: day(20) });
