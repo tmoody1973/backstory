@@ -4,7 +4,7 @@ import { query, type QueryCtx } from "./_generated/server";
 import { attribution } from "./lib/attribution";
 import { allowsDetailedAnswers, clock, findPassages, passageAt, quotable, searchTerms, storyGuard } from "./lib/askStory";
 import { normalizeForMatch } from "./lib/evidence";
-import { getShowProfile } from "./lib/shows";
+import { getShowProfile, SHOW_PROFILES } from "./lib/shows";
 import { firstSentence, relevantEnough } from "./lib/storySearch";
 
 // The contract with the Alexa MCP server: only rows from the editor-approved run, and
@@ -222,3 +222,38 @@ async function publishedSong(ctx: QueryCtx, storyId: Id<"stories">, runId: strin
     audioUrl: song.kind === "premiere" ? (song.audioUrl ?? null) : null,
   };
 }
+
+const PAGE_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+const SLUG_STOP = new Set(["the", "and", "for", "with", "milwaukee", "mke"]);
+const MAX_URL = 500;
+
+/**
+ * The published story behind a radiomilwaukee.org page (the station briefing links newsletter items with it):
+ * station stories by their own address; podcast pages (/podcast/<show>/<YYYY-MM-DD>/<slug>) by show, date (±2 days)
+ * and every distinctive word of the address appearing in the title. Null when unsure: a wrong story is worse than none.
+ */
+export const storyForPage = query({
+  args: { url: v.string() },
+  handler: async (ctx, { url }) => {
+    if (url.length > MAX_URL) return null;
+    let page: URL;
+    try { page = new URL(url); } catch { return null; }
+    if (page.hostname !== "radiomilwaukee.org") return null;
+    // ponytail: scans the newest published stories; an index on permalink if the archive grows past a few hundred
+    const published = (await ctx.db.query("stories").withIndex("by_reviewStatus_and_publishedAt", (q) => q.eq("reviewStatus", "approved")).order("desc").take(500))
+      .filter((s) => quotable(s) && !!s.summary);
+    const exact = published.find((s) => s.permalink === url);
+    if (exact) return { storyId: exact._id, title: exact.title };
+    const m = /^\/podcast\/([a-z0-9-]+)\/(\d{4}-\d{2}-\d{2})\/([a-z0-9-]+)\/?$/.exec(page.pathname);
+    if (!m || !SHOW_PROFILES[m[1]]) return null;
+    const [, show, date, slug] = m;
+    const words = slug.split("-").filter((w) => w.length >= 3 && !SLUG_STOP.has(w));
+    if (words.length === 0) return null;
+    const at = Date.parse(`${date}T12:00:00Z`);
+    const candidates = published
+      .filter((s) => s.showSlug === show && Math.abs(s.publishedAt - at) <= PAGE_DAYS_MS)
+      .filter((s) => { const title = ` ${normalizeForMatch(s.title)} `; return words.every((w) => title.includes(` ${w} `)); })
+      .sort((a, b) => Math.abs(a.publishedAt - at) - Math.abs(b.publishedAt - at));
+    return candidates[0] ? { storyId: candidates[0]._id, title: candidates[0].title } : null;
+  },
+});
