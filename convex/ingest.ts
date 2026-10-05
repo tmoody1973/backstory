@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
 import { buildDocumentUrl, buildShowQueryUrl, fetchCds, parseEpisode, seriesImageUrl, type CdsDocument, type CdsEpisode } from "./lib/cds";
-import { getShowProfile } from "./lib/shows";
+import { getShowProfile, onShowPages } from "./lib/shows";
 
 export const ingestShow = internalAction({
   args: { showSlug: v.string(), limit: v.optional(v.number()) },
@@ -17,7 +17,7 @@ export const ingestShow = internalAction({
     let created = 0;
     for (const doc of body.resources ?? []) {
       const episode = parseEpisode(doc);
-      if (!episode) continue;
+      if (!episode || !onShowPages(profile, episode.permalink)) continue;
       const result = await ctx.runMutation(internal.stories.upsertEpisode, { showSlug, ...withImage(episode, imageUrl) });
       if (result.created) created++;
     }
@@ -43,8 +43,8 @@ export const ingestEpisodes = internalAction({
     for (const cdsId of cdsIds) {
       const body = (await fetchCds(buildDocumentUrl(cdsId), token)) as { resources?: CdsDocument[] };
       const episode = body.resources?.[0] && parseEpisode(body.resources[0]);
-      if (!episode) {
-        console.log(`[backstory] ingest ${cdsId}: no audio, skipped`);
+      if (!episode || !onShowPages(profile, episode.permalink)) {
+        console.log(`[backstory] ingest ${cdsId}: no audio or not on ${showSlug}'s pages, skipped`);
         continue;
       }
       const result = await ctx.runMutation(internal.stories.upsertEpisode, { showSlug, ...withImage(episode, imageUrl) });

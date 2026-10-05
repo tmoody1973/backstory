@@ -10,6 +10,8 @@ crons.cron("ingest Uniquely Milwaukee", "15 12 * * *", internal.ingest.ingestSho
 crons.cron("ingest Ladies First", "30 12 * * *", internal.ingest.ingestShow, { showSlug: "ladies-first", limit: 10 });
 crons.cron("ingest Milwaukee Music Premiere", "45 12 * * *", internal.ingest.ingestShow, { showSlug: "milwaukee-music-premiere", limit: 10 });
 crons.cron("ingest Studio Milwaukee Sessions", "0 13 * * *", internal.ingest.ingestShow, { showSlug: "studio-milwaukee", limit: 10 });
+// The general local-stories feed (~20 stories a week): 50 covers two weeks, the import keeps only interviews.
+crons.cron("ingest Artist Interviews", "15 13 * * *", internal.ingest.ingestShow, { showSlug: "artist-interviews", limit: 50 });
 
 // An action that dies outside its error handler (timeout, deploy mid-run) never reports failure;
 // the sweeper sends such jobs through the normal retry → needs_editor path.
