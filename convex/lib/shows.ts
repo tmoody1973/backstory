@@ -28,6 +28,13 @@ export interface ShowProfile {
   reviewer: string;
   /** Whether Alexa may quote this show's transcripts when an editor hasn't set the episode's switch. */
   detailedAnswersDefault: boolean;
+  /** When the collection is a general feed: only stories whose page starts with this address belong to the show. */
+  pagePrefix?: string;
+}
+
+/** Whether a story's page belongs to the show (always, for shows with their own collection). */
+export function onShowPages(profile: ShowProfile, permalink: string | undefined): boolean {
+  return !profile.pagePrefix || (permalink?.startsWith(profile.pagePrefix) ?? false);
 }
 
 // Adding a show means adding a profile here, not changing pipeline code.
@@ -76,6 +83,23 @@ export const SHOW_PROFILES: Readonly<Record<string, ShowProfile>> = {
     // ponytail: reviewer not yet named (PRD open question)
     reviewer: "Ladies First producer (to confirm)",
     // Public artists and the host; a 17-episode transcript check (2026-10-04) found conversation, not sung lyrics.
+    detailedAnswersDefault: true,
+  },
+  "artist-interviews": {
+    slug: "artist-interviews",
+    name: "Radio Milwaukee Artist Interviews",
+    // ponytail: no collection of their own; the station's general local-stories feed, narrowed by page address
+    cdsCollectionId: "319418027",
+    cdsProfile: "story",
+    contentType: "episode",
+    pagePrefix: "https://radiomilwaukee.org/discover-music/artist-interviews/",
+    entityTypes: ["artist", "person", "organization", "place", "event"],
+    actionKinds: ["attend"],
+    hosts: [],
+    extractionNotes:
+      "Radio Milwaukee Artist Interviews are 88Nine conversations with one guest, usually a musician but not always (a Brewers broadcaster, an author). Only guests who make music are artist; anyone else is a person. Bands and groups who make music are artist; record labels, teams and businesses are organizations. Places are where the story happens or where the guest comes from, especially any Milwaukee connection; a concert venue is a venue. A tour stop or show is an event. Albums and songs belong in the summary, never as separate mentions. Interviews may play clips of songs: never use sung lyrics as a quote, evidence or fact; quote only spoken conversation. Attend actions are for upcoming shows named in the interview.",
+    reviewer: "Tarik Moody",
+    // Public guests speaking on the record, like Ladies First.
     detailedAnswersDefault: true,
   },
   "milwaukee-music-premiere": {
