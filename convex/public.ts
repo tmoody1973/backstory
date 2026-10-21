@@ -267,3 +267,32 @@ export const storyForPage = query({
     return only ? { storyId: only._id, title: only.title } : null;
   },
 });
+
+const MAX_SONG_FIELD = 200;
+/** "Effort (feat. X)" and "EFFORT" match; "&" and "and" are the same word. */
+const songKey = (text: string) => normalizeForMatch(text.replace(/[([].*?[)\]]/g, " ").replace(/&/g, " and "));
+
+/**
+ * The published premiere or session about a song the playlist played: a premiere by artist and title, a session
+ * by artist and its set list. Never the artist alone: a wrong story is worse than none.
+ */
+export const songStory = query({
+  args: { artist: v.string(), title: v.string() },
+  handler: async (ctx, args) => {
+    if (args.artist.length > MAX_SONG_FIELD || args.title.length > MAX_SONG_FIELD) return null;
+    const artist = songKey(args.artist);
+    const title = songKey(args.title);
+    if (!artist || !title) return null;
+    // ponytail: scans the newest published stories (about 55 are music); an artist index on songs if that grows
+    const music = (await ctx.db.query("stories").withIndex("by_reviewStatus_and_publishedAt", (q) => q.eq("reviewStatus", "approved")).order("desc").take(500))
+      .filter((s) => s.contentType !== "episode" && quotable(s) && !!s.summary);
+    for (const story of music) {
+      const song = await publishedSong(ctx, story._id, story.approvedRunId!);
+      if (!song || songKey(song.artist) !== artist) continue;
+      const titles = story.contentType === "premiere" ? [song.title ?? ""] : (song.setList ?? []);
+      if (!titles.some((t) => songKey(t) === title)) continue;
+      return { storyId: story._id, show: getShowProfile(story.showSlug).name, title: story.title, kind: story.contentType, publishedAt: story.publishedAt };
+    }
+    return null;
+  },
+});
